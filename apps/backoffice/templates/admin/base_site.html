@@ -1,0 +1,36 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | {{ site_title|default:"Panel Betesda" }}{% endblock %}
+
+{% block extrastyle %}{{ block.super }}
+<link rel="stylesheet" href="{% static 'backoffice/css/admin.css' %}">
+{% endblock %}
+
+{% block extrahead %}{{ block.super }}
+<script src="{% static 'backoffice/js/admin.js' %}" defer></script>
+{% endblock %}
+
+{% block branding %}
+<div id="site-name">
+  <a class="bo-brand" href="{% url 'admin:index' %}">
+    <span class="bo-brand__mark" aria-hidden="true">BR</span>
+    <span class="bo-brand__copy">
+      <strong>Betesda Rosa de Sarón</strong>
+      <small>BackOffice</small>
+    </span>
+  </a>
+</div>
+{% endblock %}
+
+{% block userlinks %}
+  {% if bo_new_messages %}
+    <a class="bo-bell" href="{% url 'admin:contacts_contactmessage_changelist' %}?status__exact=NEW"
+       title="Mensajes de contacto sin atender">
+      <span aria-hidden="true">●</span> {{ bo_new_messages }} nuevo{{ bo_new_messages|pluralize }}
+    </a>
+  {% endif %}
+  {{ block.super }}
+{% endblock %}
+
+{% block nav-global %}{% endblock %}

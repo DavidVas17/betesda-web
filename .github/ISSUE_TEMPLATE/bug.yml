@@ -1,0 +1,32 @@
+name: Reporte de defecto
+description: Registrar un comportamiento incorrecto y reproducible.
+title: "[BUG] "
+labels: [bug]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Descripcion
+      description: Explique que ocurrio y cual era el resultado esperado.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Pasos para reproducir
+      placeholder: "1. Ingresar a...\n2. Seleccionar...\n3. Observar..."
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severidad
+      options: [Critica, Alta, Media, Baja]
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidencia y ambiente
+      description: Adjunte captura, navegador, dispositivo y datos no sensibles necesarios.
+

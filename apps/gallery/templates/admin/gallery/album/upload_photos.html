@@ -1,0 +1,54 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static %}
+
+{% block extrahead %}{{ block.super }}{{ media }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">Inicio</a>
+  &rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+  &rsaquo; <a href="{% url 'admin:gallery_album_changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+  &rsaquo; <a href="{% url 'admin:gallery_album_change' original.pk %}">{{ original }}</a>
+  &rsaquo; Subir fotografías
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+  <form method="post" enctype="multipart/form-data" novalidate>
+    {% csrf_token %}
+
+    {% if form.errors %}
+      <p class="errornote">Revisa los datos marcados antes de continuar.</p>
+      {{ form.non_field_errors }}
+    {% endif %}
+
+    <fieldset class="module aligned">
+      <div class="form-row{% if form.images.errors %} errors{% endif %}">
+        {{ form.images.errors }}
+        <div id="bo-dropzone" class="bo-dropzone">
+          <p><strong>Arrastra aquí tus fotografías</strong> o elígelas desde tu equipo.</p>
+          {{ form.images }}
+          <p class="help">{{ form.images.help_text }}</p>
+        </div>
+        <p id="bo-upload-summary" class="bo-upload-summary" aria-live="polite"></p>
+        <div id="bo-previews" class="bo-previews"></div>
+      </div>
+
+      <div class="form-row{% if form.alt_text.errors %} errors{% endif %}">
+        {{ form.alt_text.errors }}
+        <div>
+          <label for="{{ form.alt_text.id_for_label }}">{{ form.alt_text.label }}:</label>
+          {{ form.alt_text }}
+          <div class="help">{{ form.alt_text.help_text }}</div>
+        </div>
+      </div>
+    </fieldset>
+
+    <div class="submit-row">
+      <input type="submit" class="default" value="Subir fotografías">
+      <a href="{% url 'admin:gallery_album_change' original.pk %}" class="closelink">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

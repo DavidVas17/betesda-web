@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Inicio | Betesda Rosa de Sarón{% endblock %}
+
+{% block content %}
+  <section class="hero">
+    <div class="container hero-grid">
+      <div>
+        <p class="eyebrow">Villa Nueva, Guatemala</p>
+        <h1>Un lugar para crecer en la fe y servir a la comunidad</h1>
+        <p class="hero-copy">
+          Desde 2006 acompañamos a niños, jóvenes, adultos y familias por medio de la
+          enseñanza, la unidad y el servicio.
+        </p>
+        <div class="actions">
+          <a class="button button-primary" href="#eventos">Ver próximas actividades</a>
+          <a class="button button-secondary" href="#contacto">Cómo llegar</a>
+        </div>
+      </div>
+      <aside class="service-card" aria-labelledby="service-title">
+        <p class="eyebrow">Próximo servicio</p>
+        <h2 id="service-title">Información en preparación</h2>
+        <p>La administración podrá publicar aquí los horarios y anuncios destacados.</p>
+      </aside>
+    </div>
+  </section>
+
+  <section id="nosotros" class="section">
+    <div class="container narrow">
+      <p class="eyebrow">Nuestra misión</p>
+      <h2>Formar discípulos y llevar esperanza</h2>
+      <p>
+        Predicamos el evangelio de Jesucristo mediante la enseñanza de la Palabra de Dios,
+        el amor, la unidad y el trabajo en equipo, sirviendo integralmente a nuestra comunidad.
+      </p>
+    </div>
+  </section>
+
+  <section id="ministerios" class="section section-muted">
+    <div class="container">
+      <p class="eyebrow">Ministerios</p>
+      <h2>Un espacio para cada etapa de la vida</h2>
+      <div class="card-grid">
+        <article><h3>Niños</h3><p>Enseñanza comprensible, dinámica y amorosa.</p></article>
+        <article><h3>Jóvenes</h3><p>Discipulado y desarrollo de dones para servir.</p></article>
+        <article><h3>Familias</h3><p>Fortalecimiento espiritual, familiar y comunitario.</p></article>
+        <article><h3>Comunidad</h3><p>Evangelismo, acción social y acompañamiento.</p></article>
+      </div>
+    </div>
+  </section>
+
+  <section id="eventos" class="section events-section">
+  <div class="container">
+
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Eventos y actividades</p>
+        <h2>Próximas actividades</h2>
+      </div>
+
+      <p>
+        Conoce las próximas actividades de Betesda Rosa de Sarón.
+      </p>
+    </div>
+
+    {% if events %}
+
+      <div class="events-grid">
+        {% for event in events %}
+
+          <article class="event-card">
+
+            {% if event.cover_image %}
+              <div class="event-card-image">
+                <img
+                  src="{{ event.cover_image.url }}"
+                  alt="{{ event.title }}"
+                >
+              </div>
+            {% endif %}
+
+            <div class="event-card-content">
+
+              <div class="event-date">
+                <span class="event-day">
+                  {{ event.starts_at|date:"d" }}
+                </span>
+
+                <span>
+                  {{ event.starts_at|date:"M Y" }}
+                </span>
+              </div>
+
+              <h3>{{ event.title }}</h3>
+
+              <p>{{ event.summary }}</p>
+
+              <div class="event-info">
+
+                <span>
+                  📅 {{ event.starts_at|date:"d/m/Y" }}
+                </span>
+
+                <span>
+                  🕐 {{ event.starts_at|date:"H:i" }}
+                </span>
+
+                <span>
+                  📍 {{ event.location }}
+                </span>
+
+              </div>
+
+            </div>
+
+          </article>
+
+        {% endfor %}
+      </div>
+
+    {% else %}
+
+      <div class="events-empty">
+        <p class="eyebrow">Próximamente</p>
+        <h3>No hay actividades publicadas por el momento</h3>
+        <p>
+          Muy pronto encontrarás aquí nuestros próximos eventos.
+        </p>
+      </div>
+
+    {% endif %}
+
+  </div>
+</section>
+
+  <section id="contacto" class="section contact-band">
+    <div class="container split">
+      <div>
+        <p class="eyebrow">Contacto</p>
+        <h2>Estamos para servirte</h2>
+      </div>
+      <div>
+        <p>13 calle 13-02, colonia Santa Isabel II, proyectos, zona 3 de Villa Nueva.</p>
+        <p><a href="tel:+50241713008">4171-3008</a></p>
+      </div>
+    </div>
+  </section>
+{% endblock %}

@@ -1,0 +1,216 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block bodyclass %}{{ block.super }} dashboard bo-dashboard{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+{% block content_title %}{% endblock %}
+
+{% block content %}
+<main class="bo-shell" id="content-main">
+  <section class="bo-hero">
+    <div class="bo-hero__content">
+      <span class="bo-eyebrow">Panel de gestión</span>
+      <h1>Hola, {{ user.get_short_name|default:user.get_username }}</h1>
+      <p>Administra el contenido del sitio desde un solo lugar, sin menús técnicos ni opciones innecesarias.</p>
+    </div>
+    {% if dashboard.shortcuts %}
+      <div class="bo-hero__actions" aria-label="Acciones rápidas">
+        {% for item in dashboard.shortcuts %}
+          <a class="bo-action-button" href="{{ item.url }}">
+            <span aria-hidden="true">+</span>{{ item.label }}
+          </a>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </section>
+
+  {% if dashboard.alerts %}
+    <section class="bo-alert-stack" aria-label="Pendientes importantes">
+      {% for alert in dashboard.alerts %}
+        <div class="bo-alert bo-alert--{{ alert.level }}">
+          <div>
+            <span class="bo-alert__dot" aria-hidden="true"></span>
+            <span>{{ alert.text }}</span>
+          </div>
+          <a href="{{ alert.url }}">{{ alert.action }} <span aria-hidden="true">→</span></a>
+        </div>
+      {% endfor %}
+    </section>
+  {% endif %}
+
+  {% if dashboard.kpis %}
+    <section class="bo-kpi-grid" aria-label="Resumen del sitio">
+      {% for kpi in dashboard.kpis %}
+        <a class="bo-kpi bo-kpi--{{ kpi.tone }}" href="{{ kpi.url }}">
+          <span class="bo-kpi__label">{{ kpi.label }}</span>
+          <strong class="bo-kpi__value">{{ kpi.value }}</strong>
+          <span class="bo-kpi__hint">{{ kpi.hint }}</span>
+          <span class="bo-kpi__arrow" aria-hidden="true">→</span>
+        </a>
+      {% endfor %}
+    </section>
+  {% endif %}
+
+  {% if dashboard.modules %}
+    <section class="bo-section" aria-labelledby="bo-management-title">
+      <div class="bo-section__heading">
+        <div>
+          <span class="bo-eyebrow">Contenido y operación</span>
+          <h2 id="bo-management-title">Gestión del sitio</h2>
+        </div>
+        <p>Entra directamente al área que necesitas administrar.</p>
+      </div>
+
+      <div class="bo-module-grid">
+        {% for module in dashboard.modules %}
+          <article class="bo-module bo-module--{{ module.accent }}">
+            <a class="bo-module__main" href="{{ module.url }}">
+              <span class="bo-module__icon" aria-hidden="true">{{ module.code }}</span>
+              <span class="bo-module__body">
+                <span class="bo-module__title">{{ module.title }}</span>
+                <span class="bo-module__description">{{ module.description }}</span>
+              </span>
+              <span class="bo-module__metric">
+                <strong>{{ module.metric }}</strong>
+                <small>{{ module.metric_label }}</small>
+              </span>
+            </a>
+            <div class="bo-module__footer">
+              <a href="{{ module.url }}">Administrar <span aria-hidden="true">→</span></a>
+              {% if module.add_url %}
+                <a class="bo-module__add" href="{{ module.add_url }}">+ {{ module.add_label }}</a>
+              {% endif %}
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
+  <section class="bo-section bo-section--secondary" aria-labelledby="bo-today-title">
+    <div class="bo-section__heading">
+      <div>
+        <span class="bo-eyebrow">Seguimiento</span>
+        <h2 id="bo-today-title">Lo más reciente</h2>
+      </div>
+      <p>Información útil para continuar el trabajo de hoy.</p>
+    </div>
+
+    <div class="bo-detail-grid">
+      {% if dashboard.upcoming_events is not None %}
+        <article class="bo-panel">
+          <div class="bo-panel__heading">
+            <h3>Próximos eventos</h3>
+            <a href="{% url 'admin:events_event_changelist' %}">Ver todos</a>
+          </div>
+          {% if dashboard.upcoming_events %}
+            <ul class="bo-list">
+              {% for event in dashboard.upcoming_events %}
+                <li>
+                  <a href="{{ event.url }}">{{ event.title }}</a>
+                  <span>{{ event.starts_at|date:"D j M · H:i" }} · {{ event.location }}</span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <div class="bo-empty-state">
+              <strong>Sin eventos próximos</strong>
+              <span>Cuando publiques un evento aparecerá aquí.</span>
+            </div>
+          {% endif %}
+        </article>
+      {% endif %}
+
+      {% if dashboard.recent_messages is not None %}
+        <article class="bo-panel">
+          <div class="bo-panel__heading">
+            <h3>Mensajes recientes</h3>
+            <a href="{% url 'admin:contacts_contactmessage_changelist' %}">Ver todos</a>
+          </div>
+          {% if dashboard.recent_messages %}
+            <ul class="bo-list">
+              {% for message in dashboard.recent_messages %}
+                <li>
+                  <div class="bo-list__row">
+                    <a href="{{ message.url }}">{{ message.subject }}</a>
+                    <span class="bo-badge bo-badge--{{ message.tone }}">{{ message.status }}</span>
+                  </div>
+                  <span>{{ message.name }} · hace {{ message.ago|timesince }}</span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <div class="bo-empty-state">
+              <strong>Sin mensajes todavía</strong>
+              <span>Las consultas del formulario público aparecerán aquí.</span>
+            </div>
+          {% endif %}
+        </article>
+      {% endif %}
+
+      {% if dashboard.recent_drafts is not None %}
+        <article class="bo-panel">
+          <div class="bo-panel__heading">
+            <h3>Borradores de noticias</h3>
+            <a href="{% url 'admin:news_post_changelist' %}?status__exact=DRAFT">Ver todos</a>
+          </div>
+          {% if dashboard.recent_drafts %}
+            <ul class="bo-list">
+              {% for post in dashboard.recent_drafts %}
+                <li>
+                  <a href="{{ post.url }}">{{ post.title }}</a>
+                  <span>Editado hace {{ post.updated_at|timesince }}</span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <div class="bo-empty-state">
+              <strong>Todo al día</strong>
+              <span>No hay borradores pendientes.</span>
+            </div>
+          {% endif %}
+        </article>
+      {% endif %}
+
+      {% if dashboard.site_checklist %}
+        <article class="bo-panel">
+          <div class="bo-panel__heading">
+            <h3>Información institucional</h3>
+            <a href="{{ dashboard.site_checklist.url }}">Editar</a>
+          </div>
+          <div class="bo-progress-copy">
+            <strong>{{ dashboard.site_checklist.done }}/{{ dashboard.site_checklist.total }}</strong>
+            <span>datos principales completos</span>
+          </div>
+          <progress class="bo-progress" max="{{ dashboard.site_checklist.total }}" value="{{ dashboard.site_checklist.done }}"></progress>
+          {% if dashboard.site_checklist.missing %}
+            <p class="bo-muted-copy">Pendiente: {{ dashboard.site_checklist.missing|join:", " }}.</p>
+          {% else %}
+            <p class="bo-muted-copy">La información principal del sitio está completa.</p>
+          {% endif %}
+        </article>
+      {% endif %}
+
+      {% if dashboard.weekly_messages %}
+        <article class="bo-panel bo-panel--wide">
+          <div class="bo-panel__heading">
+            <h3>Mensajes por semana</h3>
+            <span class="bo-panel__meta">Últimas 8 semanas</span>
+          </div>
+          <div class="bo-bars" role="img" aria-label="Mensajes recibidos en las últimas ocho semanas">
+            {% for week in dashboard.weekly_messages %}
+              <div class="bo-bar" title="Semana del {{ week.label }}: {{ week.count }}">
+                <span class="bo-bar__count">{{ week.count }}</span>
+                <span class="bo-bar__track"><span class="bo-bar__fill" style="height: {{ week.pct }}%"></span></span>
+                <span class="bo-bar__label">{{ week.label }}</span>
+              </div>
+            {% endfor %}
+          </div>
+        </article>
+      {% endif %}
+    </div>
+  </section>
+</main>
+{% endblock %}
+
+{% block sidebar %}{% endblock %}

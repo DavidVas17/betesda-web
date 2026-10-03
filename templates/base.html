@@ -1,0 +1,45 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Sitio oficial de Ministerios Pentecostés Betesda Rosa de Sarón.">
+    <title>{% block title %}Betesda Rosa de Sarón{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  </head>
+  <body>
+    <a class="skip-link" href="#contenido">Saltar al contenido</a>
+    <header class="site-header">
+      <nav class="nav container" aria-label="Navegación principal">
+        <a class="brand" href="{% url 'core:home' %}" aria-label="Ir al inicio">
+          <span class="brand-mark" aria-hidden="true">BR</span>
+          <span>Betesda Rosa de Sarón</span>
+        </a>
+        <ul class="nav-links">
+          <li><a href="#nosotros">Nosotros</a></li>
+          <li><a href="#ministerios">Ministerios</a></li>
+          <li><a href="#eventos">Eventos</a></li>
+          <li><a href="#contacto">Contacto</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <main id="contenido">
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-grid">
+        <div>
+          <strong>Ministerios Pentecostés Betesda Rosa de Sarón</strong>
+          <p>Amando a Dios, unidos en Cristo y sirviendo a nuestra comunidad.</p>
+        </div>
+        <div>
+          <strong>Ubicación</strong>
+          <p>Santa Isabel II, zona 3 de Villa Nueva, Guatemala.</p>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

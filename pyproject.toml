@@ -1,0 +1,51 @@
+[project]
+name = "betesda-web"
+version = "0.1.0"
+description = "Sitio web institucional de Ministerios Pentecostes Betesda Rosa de Saron"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+  "Django==5.2.8",
+  "django-environ==0.12.0",
+  "gunicorn==23.0.0",
+  "Pillow==11.3.0",
+  "psycopg[binary]==3.2.12",
+  "whitenoise==6.11.0",
+]
+
+[dependency-groups]
+dev = [
+  "coverage[toml]==7.10.7",
+  "pre-commit==4.3.0",
+  "pytest==8.4.2",
+  "pytest-django==4.11.1",
+  "ruff==0.13.2",
+]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.test"
+python_files = ["test_*.py", "*_test.py"]
+addopts = "-ra --strict-markers --strict-config"
+testpaths = ["tests"]
+
+[tool.coverage.run]
+branch = true
+source = ["apps", "config"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+fail_under = 70
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+exclude = ["**/migrations/*.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "DJ", "UP", "SIM"]
+ignore = ["DJ008"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
