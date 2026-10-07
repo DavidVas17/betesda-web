@@ -4,42 +4,59 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Sitio oficial de Ministerios Pentecostés Betesda Rosa de Sarón.">
+    <meta name="description" content="{% block description %}Conoce Betesda Rosa de Sarón: nuestra iglesia, ministerios, eventos y comunidad en Villa Nueva, Guatemala.{% endblock %}">
     <title>{% block title %}Betesda Rosa de Sarón{% endblock %}</title>
+    {% include 'includes/favicons.html' %}
     <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    <link rel="stylesheet" href="{% static 'css/site.css' %}">
+    {% block extra_css %}{% endblock %}
+    <script src="{% static 'js/site.js' %}" defer></script>
+    {% block extra_js %}{% endblock %}
   </head>
   <body>
     <a class="skip-link" href="#contenido">Saltar al contenido</a>
     <header class="site-header">
       <nav class="nav container" aria-label="Navegación principal">
-        <a class="brand" href="{% url 'core:home' %}" aria-label="Ir al inicio">
-          <span class="brand-mark" aria-hidden="true">BR</span>
-          <span>Betesda Rosa de Sarón</span>
+        <a class="brand" href="{% url 'core:home' %}" aria-label="Betesda Rosa de Sarón, ir al inicio">
+          <img class="brand-logo" src="{% static 'images/logo-betesda.jpg' %}" width="48" height="48" alt="">
+          <span class="brand-copy">Betesda<span>Rosa de Sarón</span></span>
         </a>
-        <ul class="nav-links">
-          <li><a href="#nosotros">Nosotros</a></li>
-          <li><a href="#ministerios">Ministerios</a></li>
-          <li><a href="#eventos">Eventos</a></li>
-          <li><a href="#contacto">Contacto</a></li>
+        <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-navigation">
+          <span>Menú</span><span class="nav-toggle-lines" aria-hidden="true"></span>
+        </button>
+        <ul id="primary-navigation" class="nav-links">
+          {% for item in navigation %}
+            <li><a href="{{ item.url }}"{% if item.active %} aria-current="page"{% endif %}>{{ item.label }}</a></li>
+          {% endfor %}
         </ul>
       </nav>
     </header>
-
-    <main id="contenido">
-      {% block content %}{% endblock %}
-    </main>
-
+    <main id="contenido">{% block content %}{% endblock %}</main>
     <footer class="site-footer">
       <div class="container footer-grid">
         <div>
-          <strong>Ministerios Pentecostés Betesda Rosa de Sarón</strong>
-          <p>Amando a Dios, unidos en Cristo y sirviendo a nuestra comunidad.</p>
+          <strong>{{ site.name }}</strong>
+          <p>{{ site.slogan }}</p>
+          <p class="footer-caption">Sirviendo a nuestra comunidad desde {{ site.founded }}.</p>
         </div>
         <div>
-          <strong>Ubicación</strong>
-          <p>Santa Isabel II, zona 3 de Villa Nueva, Guatemala.</p>
+          <strong>Visítanos</strong>
+          <p>{{ site.address }}</p>
+          <a href="tel:{{ site.phone_link }}">{{ site.phone }}</a>
+        </div>
+        <div>
+          <strong>Sigamos en contacto</strong>
+          <div class="footer-links">
+            <a href="{% url 'contacts:contact' %}">Peticiones de oración / Contáctanos</a>
+            <nav class="footer-icon-links" aria-label="Redes sociales y ubicación">
+              <a class="footer-icon-link" href="{{ site.facebook_url }}" target="_blank" rel="noopener noreferrer" aria-label="Visitar Facebook de la iglesia (abre en otra pestaña)" title="Facebook">{% include 'includes/icon.html' with name='facebook' %}</a>
+              <a class="footer-icon-link" href="{{ site.map_url }}" target="_blank" rel="noopener noreferrer" aria-label="Ver ubicación de la iglesia en Google Maps (abre en otra pestaña)" title="Ubicación">{% include 'includes/icon.html' with name='pin' %}</a>
+            </nav>
+            {% if site.email %}<a href="mailto:{{ site.email }}">{{ site.email }}</a>{% endif %}
+          </div>
         </div>
       </div>
+      <div class="container footer-bottom"><span>Villa Nueva, Guatemala</span><a href="{% url 'core:about' %}">Conoce nuestra iglesia</a></div>
     </footer>
   </body>
 </html>

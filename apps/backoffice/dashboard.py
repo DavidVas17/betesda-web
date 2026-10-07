@@ -121,6 +121,7 @@ def build_dashboard(request) -> dict:
             {
                 "subject": message.subject,
                 "name": message.name,
+                "kind": message.get_kind_display(),
                 "status": message.get_status_display(),
                 "tone": STATUS_TONES.get(message.status, "neutral"),
                 "ago": message.created_at,

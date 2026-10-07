@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+{% block title %}Noticias y anuncios | Betesda Rosa de Sarón{% endblock %}
+{% block content %}
+  {% include 'includes/page_heading.html' with eyebrow='Mantente al día' heading='Noticias y anuncios' intro='Información, novedades y anuncios para nuestra congregación y para quienes desean conocernos.' %}
+  <section class="section"><div class="container">{% if page_obj %}<div class="content-grid">{% for post in page_obj %}{% include 'includes/post_card.html' %}{% endfor %}</div>{% else %}{% include 'includes/empty_state.html' with icon='mail' heading='Sin noticias por el momento' copy='Aquí encontrarás los próximos anuncios y novedades de la comunidad.' %}{% endif %}{% include 'includes/pagination.html' %}</div></section>
+  {% include 'includes/invitation.html' %}
+{% endblock %}

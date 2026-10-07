@@ -8,13 +8,14 @@
 {% endblock %}
 
 {% block extrahead %}{{ block.super }}
+{% include 'includes/favicons.html' %}
 <script src="{% static 'backoffice/js/admin.js' %}" defer></script>
 {% endblock %}
 
 {% block branding %}
 <div id="site-name">
   <a class="bo-brand" href="{% url 'admin:index' %}">
-    <span class="bo-brand__mark" aria-hidden="true">BR</span>
+    <img class="bo-brand__mark" src="{% static 'images/logo-betesda.jpg' %}" width="48" height="48" alt="Logo de Betesda Rosa de Sarón">
     <span class="bo-brand__copy">
       <strong>Betesda Rosa de Sarón</strong>
       <small>BackOffice</small>

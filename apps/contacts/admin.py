@@ -22,23 +22,27 @@ STALE_HOURS = 48
 class ContactMessageAdmin(CsvExportMixin, admin.ModelAdmin):
     list_display = (
         "subject",
+        "kind",
         "name",
         "email",
+        "phone",
         "status_badge",
         "assigned_to",
         "waiting",
         "created_at",
     )
     list_display_links = ("subject",)
-    list_filter = ("status", "assigned_to", "created_at")
+    list_filter = ("kind", "status", "assigned_to", "created_at")
     list_select_related = ("assigned_to",)
-    search_fields = ("name", "email", "subject", "message", "internal_notes")
+    search_fields = ("name", "email", "phone", "subject", "message", "internal_notes")
     date_hierarchy = "created_at"
     save_on_top = True
     list_per_page = 30
     readonly_fields = (
+        "kind",
         "name",
         "reply_link",
+        "phone",
         "subject",
         "message",
         "privacy_accepted",
@@ -53,13 +57,13 @@ class ContactMessageAdmin(CsvExportMixin, admin.ModelAdmin):
         "assign_to_me",
         "export_csv",
     )
-    csv_fields = ("created_at", "name", "email", "subject", "status", "message")
+    csv_fields = ("created_at", "kind", "name", "email", "phone", "subject", "status", "message")
     csv_filename = "mensajes-contacto"
 
     fieldsets = (
         (
             "Mensaje recibido",
-            {"fields": ("name", "reply_link", "subject", "message", "created_at")},
+            {"fields": ("kind", "name", "reply_link", "phone", "subject", "message", "created_at")},
         ),
         (
             "Seguimiento",

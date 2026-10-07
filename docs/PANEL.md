@@ -47,6 +47,15 @@ Las cuentas creadas desde el panel quedan con acceso al panel (`is_staff`) autom
 
 ## Notas
 
-- Los eventos y las noticias tienen `view_on_site = False` porque el sitio público aún no tiene
-  páginas de detalle; el enlace «Ver en el sitio» llevaría a un error. Actívelo cuando existan.
-- El sitio público sigue siendo estático: lo que se edite en el panel todavía no se refleja allí.
+- Los eventos y noticias publicados tienen páginas de detalle y el enlace «Ver en el sitio» disponible desde el panel. Los borradores, noticias archivadas y noticias programadas para una fecha futura no se muestran al público.
+- La portada muestra hasta tres próximas actividades y hasta tres noticias; las páginas de Eventos, Noticias y Galería contienen los listados paginados y sus detalles.
+- Solo los álbumes publicados aparecen en la galería. Las fotografías conservan el texto alternativo, descripción y orden definidos en el panel.
+- Los datos de teléfono, dirección, correo y enlaces configurados se reflejan en Contacto y en el pie de página; cuando faltan, se usan los datos institucionales del documento proporcionado. No se inventa un correo institucional.
+
+## Solicitudes del formulario de contacto
+
+Los visitantes pueden enviar su nombre, correo electrónico, teléfono opcional, asunto y mensaje desde la página **Peticiones de oración / Contáctanos**, aceptando el uso de sus datos para atender la solicitud. No necesitan una cuenta. Cada envío queda clasificado como **Petición de oración** o **Contacto**, con estado **Nuevo**. Ambos tipos cuentan en **Mensajes nuevos** y en el aviso de la cabecera.
+
+El tipo aparece en los mensajes recientes, en el listado y en el detalle. Use el filtro **Tipo de solicitud** para separar peticiones de oración de consultas generales. El teléfono también se muestra en el listado y el detalle, puede buscarse y se incluye en la exportación CSV junto con el tipo de solicitud.
+
+Para atender una solicitud, abra **Mensajes nuevos** en el tablero y seleccione el asunto. Allí encontrará los datos del remitente y la petición, podrá responder por correo, asignar un responsable, agregar notas internas y cambiar el estado a **En seguimiento** o **Cerrado**. Los mensajes y las notas internas no se muestran en el sitio público.

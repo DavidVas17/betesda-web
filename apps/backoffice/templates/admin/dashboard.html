@@ -135,7 +135,7 @@
                     <a href="{{ message.url }}">{{ message.subject }}</a>
                     <span class="bo-badge bo-badge--{{ message.tone }}">{{ message.status }}</span>
                   </div>
-                  <span>{{ message.name }} · hace {{ message.ago|timesince }}</span>
+                  <span>{{ message.kind }} · {{ message.name }} · hace {{ message.ago|timesince }}</span>
                 </li>
               {% endfor %}
             </ul>

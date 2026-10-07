@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+{% block title %}Ministerios | Betesda Rosa de Sarón{% endblock %}
+{% block content %}
+  {% include 'includes/page_heading.html' with eyebrow='Crecer y servir' heading='Un ministerio para cada etapa de la vida' intro='Dios nos ha dado diferentes dones. Juntos encontramos un lugar para aprender, acompañar y servir a nuestra comunidad.' %}
+  <section class="section"><div class="container"><div class="content-grid">{% for ministry in ministries %}<article id="{{ ministry.slug }}" class="ministry-card"><span class="card-number">{{ forloop.counter|stringformat:'02d' }}</span><p class="card-kicker">{{ ministry.tag }}</p><h2>{{ ministry.name }}</h2><p>{{ ministry.description }}</p><a class="text-link" href="{% url 'contacts:contact' %}?tipo=contacto">Quiero conocer más {% include 'includes/icon.html' with name='arrow' %}</a></article>{% endfor %}</div></div></section>
+  {% include 'includes/invitation.html' %}
+{% endblock %}

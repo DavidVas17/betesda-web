@@ -18,9 +18,9 @@ def test_readiness_endpoint_checks_database(client):
     assert response.json()["database"] == "connected"
 
 
+@pytest.mark.django_db
 def test_home_page_is_accessible(client):
     response = client.get(reverse("core:home"))
 
     assert response.status_code == 200
     assert "Betesda Rosa de Sarón" in response.content.decode()
-

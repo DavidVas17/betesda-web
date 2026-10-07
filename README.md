@@ -74,4 +74,8 @@ La secuencia de trabajo está en [docs/ROADMAP.md](docs/ROADMAP.md) y el procedi
 
 ## Estado del alcance
 
-Esta entrega corresponde a los cimientos: infraestructura reproducible, modelos base, panel administrativo, primera vista institucional, seguridad, pruebas y automatización. Los flujos públicos completos de eventos, noticias, galería y formulario de contacto se implementan en iteraciones posteriores sobre esta base.
+El sitio incluye una portada con información general y adelantos de contenido, y páginas independientes para **Nosotros**, **Ministerios**, **Eventos**, **Noticias**, **Galería** y **Contacto**, accesibles desde el menú principal. Eventos y noticias tienen páginas de detalle; la galería organiza las fotografías en álbumes con vista ampliada. Solo se muestra contenido publicado, y las noticias con fecha futura permanecen ocultas hasta su publicación.
+
+La página **Peticiones de oración / Contáctanos** contiene dos pestañas con los mismos campos: nombre, correo electrónico, teléfono opcional, asunto, mensaje y consentimiento. Cada pestaña adapta los textos y conserva los datos al cambiar entre ellas. Los envíos válidos se guardan con estado **Nuevo** y su tipo correspondiente; aparecen en **Mensajes nuevos** y pueden filtrarse por tipo en el BackOffice. Incluye validación del servidor, protección CSRF, un campo antispam oculto y un máximo de 5,000 caracteres por mensaje. Las pestañas también funcionan como enlaces con JavaScript desactivado.
+
+La información de la iglesia y el logotipo provienen del documento institucional proporcionado. Las fuentes y decisiones de contenido están en [docs/CONTENT.md](docs/CONTENT.md). Los datos de contacto se actualizan desde **Configuración del sitio**. Al actualizar una instalación existente, aplique las migraciones con `docker compose exec web python manage.py migrate` para agregar el teléfono opcional y el tipo de solicitud.

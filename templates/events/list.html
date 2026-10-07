@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block title %}Eventos y actividades | Betesda Rosa de Sarón{% endblock %}
+{% block content %}
+  {% include 'includes/page_heading.html' with eyebrow='Nuestra comunidad se reúne' heading='Eventos y actividades' intro='Encuentra espacios para compartir la fe, aprender y servir. Consulta las fechas, horarios y lugares de cada actividad.' %}
+  <section class="section"><div class="container">
+    <nav class="section-tabs" aria-label="Filtrar eventos"><a href="{% url 'events:list' %}"{% if not past %} aria-current="page"{% endif %}>Próximas actividades</a><a href="{% url 'events:list' %}?vista=anteriores"{% if past %} aria-current="page"{% endif %}>Actividades anteriores</a></nav>
+    {% if page_obj %}<div class="content-grid">{% for event in page_obj %}{% include 'includes/event_card.html' %}{% endfor %}</div>{% else %}{% include 'includes/empty_state.html' with icon='calendar' heading='Sin actividades para mostrar' copy='Vuelve pronto para conocer las reuniones y actividades de nuestra iglesia.' %}{% endif %}
+    {% include 'includes/pagination.html' %}
+  </div></section>
+  {% include 'includes/invitation.html' %}
+{% endblock %}

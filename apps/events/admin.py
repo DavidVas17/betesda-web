@@ -56,8 +56,10 @@ class EventAdmin(CsvExportMixin, admin.ModelAdmin):
     readonly_fields = ("image_preview", "created_at", "updated_at")
     save_on_top = True
     list_per_page = 25
-    # Aun no existe la pagina publica de detalle; evita un enlace "Ver en el sitio" roto.
-    view_on_site = False
+
+    def view_on_site(self, obj):
+        return obj.get_absolute_url() if obj.is_published else None
+
     actions = (
         "publish_events",
         "unpublish_events",

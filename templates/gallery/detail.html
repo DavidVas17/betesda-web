@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+{% block title %}{{ album.title }} | Galería | Betesda Rosa de Sarón{% endblock %}
+{% block content %}
+  {% include 'includes/page_heading.html' with eyebrow='Galería de eventos' heading=album.title intro=album.description %}
+  <section class="section"><div class="container"><div class="section-heading"><a class="text-link" href="{% url 'gallery:list' %}">← Volver a la galería</a>{% if album.event_date %}<p>{{ album.event_date|date:'d F Y' }}</p>{% endif %}</div>{% if page_obj %}<div class="photo-grid">{% for photo in page_obj %}<figure><a class="photo-link" href="{{ photo.image.url }}" data-gallery-photo data-caption="{{ photo.caption }}"><img src="{{ photo.image.url }}" alt="{{ photo.alt_text }}" loading="lazy" width="640" height="480"><span class="photo-zoom">Ver fotografía {% include 'includes/icon.html' with name='image' %}</span></a>{% if photo.caption %}<figcaption>{{ photo.caption }}</figcaption>{% endif %}</figure>{% endfor %}</div>{% else %}{% include 'includes/empty_state.html' with icon='image' heading='Este álbum aún no tiene fotografías' copy='Puedes explorar los otros álbumes de nuestra galería.' %}{% endif %}{% include 'includes/pagination.html' %}</div></section>
+  <dialog class="photo-viewer" aria-label="Ver fotografía ampliada"><button type="button" class="photo-viewer-close" aria-label="Cerrar fotografía">×</button><figure><img alt=""><figcaption></figcaption></figure></dialog>
+{% endblock %}

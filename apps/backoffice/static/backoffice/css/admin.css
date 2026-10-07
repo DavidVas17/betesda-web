@@ -177,18 +177,14 @@ a { transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15
 }
 
 .bo-brand__mark {
-  display: grid;
-  width: 42px;
-  height: 42px;
-  place-items: center;
-  flex: 0 0 42px;
+  display: block;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
   border: 1px solid rgba(243, 207, 115, 0.8);
-  border-radius: 14px;
-  background: linear-gradient(145deg, rgba(213, 167, 46, 0.18), rgba(213, 167, 46, 0.04));
-  color: var(--gold-300);
-  font-size: 0.83rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--ink-950);
 }
 
 .bo-brand__copy {

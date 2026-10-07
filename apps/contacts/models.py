@@ -5,6 +5,10 @@ from apps.core.models import TimeStampedModel
 
 
 class ContactMessage(TimeStampedModel):
+    class Kind(models.TextChoices):
+        CONTACT = "CONTACT", "Contacto"
+        PRAYER = "PRAYER", "Petición de oración"
+
     class Status(models.TextChoices):
         NEW = "NEW", "Nuevo"
         IN_PROGRESS = "IN_PROGRESS", "En seguimiento"
@@ -12,7 +16,15 @@ class ContactMessage(TimeStampedModel):
         SPAM = "SPAM", "No deseado"
 
     name = models.CharField("nombre", max_length=120)
+    kind = models.CharField(
+        "tipo de solicitud",
+        max_length=10,
+        choices=Kind.choices,
+        default=Kind.CONTACT,
+        db_index=True,
+    )
     email = models.EmailField("correo electronico")
+    phone = models.CharField("teléfono", max_length=30, blank=True)
     subject = models.CharField("asunto", max_length=180)
     message = models.TextField("mensaje")
     status = models.CharField(
@@ -38,4 +50,3 @@ class ContactMessage(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"{self.subject} - {self.name}"
-

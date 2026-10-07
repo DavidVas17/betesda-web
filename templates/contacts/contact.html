@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Peticiones de oración / Contáctanos | Betesda Rosa de Sarón{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/contact.css' %}"><link rel="stylesheet" href="{% static 'css/contact-page.css' %}">{% endblock %}
+{% block extra_js %}<script src="{% static 'js/contact.js' %}" defer></script>{% endblock %}
+{% block content %}
+  {% include 'includes/page_heading.html' with eyebrow='Estamos para escucharte' heading='Peticiones de oración / Contáctanos' intro='Comparte una petición de oración o escríbenos para conocer más de la iglesia. Elige la opción que necesitas.' %}
+  <section id="contacto" class="section contact-band" aria-labelledby="contact-title"><div class="container contact-layout">
+    <div class="contact-info"><p class="eyebrow">Cerca de ti</p><h2 id="contact-title" data-contact-copy="left_title">{{ contact_mode.left_title }}</h2><p class="contact-intro" data-contact-copy="intro">{{ contact_mode.intro }}</p>
+      <div class="contact-details">
+        <div class="contact-detail"><span class="contact-icon">{% include 'includes/icon.html' with name='pin' %}</span><div><h3>Visítanos</h3><p>{{ site.address }}</p><a class="contact-map-link" href="{{ site.map_url }}" target="_blank" rel="noopener noreferrer">Cómo llegar →</a></div></div>
+        <div class="contact-detail"><span class="contact-icon">{% include 'includes/icon.html' with name='phone' %}</span><div><h3>Llámanos</h3><p><a href="tel:{{ site.phone_link }}">{{ site.phone }}</a></p></div></div>
+        <div class="contact-detail"><span class="contact-icon">{% include 'includes/icon.html' with name='external' %}</span><div><h3>También en Facebook</h3><p><a href="{{ site.facebook_url }}" target="_blank" rel="noopener noreferrer">Rosa de Sarón →</a></p></div></div>
+        {% if site.email %}<div class="contact-detail"><span class="contact-icon">{% include 'includes/icon.html' with name='mail' %}</span><div><h3>Correo electrónico</h3><p><a href="mailto:{{ site.email }}">{{ site.email }}</a></p></div></div>{% endif %}
+      </div>
+      <section class="contact-map" aria-labelledby="contact-map-title">
+        <div class="contact-map-heading"><span class="contact-icon">{% include 'includes/icon.html' with name='pin' %}</span><div><h3 id="contact-map-title">Encuéntranos aquí</h3><p>Te esperamos en Villa Nueva</p></div></div>
+        <iframe src="{{ site.map_embed_url }}" title="Mapa de ubicación de Betesda Rosa de Sarón" width="600" height="300" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
+        <a class="contact-map-directions" href="{{ site.map_url }}" target="_blank" rel="noopener noreferrer">Abrir mapa y ver cómo llegar {% include 'includes/icon.html' with name='external' %}</a>
+      </section>
+      <p class="contact-reassurance">{% include 'includes/icon.html' with name='lock' %}Tu mensaje y tus datos no se publican en el sitio.</p>
+    </div>
+    <div id="formulario" class="contact-card contact-tabbed-card">
+      <nav class="contact-tabs" aria-label="Tipo de solicitud">{% for mode in contact_modes %}<a href="{% url 'contacts:contact' %}?tipo={{ mode.slug }}#formulario" data-contact-mode="{{ mode.kind }}"{% if mode.kind == contact_mode.kind %} aria-current="page"{% endif %}>{% if mode.kind == 'PRAYER' %}{% include 'includes/icon.html' with name='heart' %}{% else %}{% include 'includes/icon.html' with name='mail' %}{% endif %}{{ mode.tab }}</a>{% endfor %}</nav>
+      <div class="contact-card-inner"><div class="contact-card-heading"><span class="contact-icon">{% include 'includes/icon.html' with name='mail' %}</span><div><h3 id="contact-form-title" data-contact-copy="title">{{ contact_mode.title }}</h3><p data-contact-copy="subtitle">{{ contact_mode.subtitle }}</p></div></div>
+        <p class="contact-required-note">Los campos con * son obligatorios. El teléfono es opcional.</p>
+        {% for notice in messages %}{% if 'contact' in notice.tags %}<div class="contact-notice contact-success" role="status">{{ notice }}</div>{% endif %}{% endfor %}
+        <form class="contact-form" action="{% url 'contacts:send' %}#formulario" method="post" aria-labelledby="contact-form-title">
+          {% csrf_token %}{{ contact_form.kind }}<div hidden aria-hidden="true">{{ contact_form.website }}</div>
+          {% if contact_form.errors %}<div class="contact-notice contact-error" role="alert"><p>Revisa los campos indicados para enviar tu solicitud.</p>{{ contact_form.non_field_errors }}{% for error in contact_form.kind.errors %}<p>{{ error }}</p>{% endfor %}</div>{% endif %}
+          {% for field in contact_form.visible_fields %}{% if field.name == 'privacy_accepted' %}<div class="contact-field contact-privacy"><div class="contact-consent">{{ field }}<label for="{{ field.id_for_label }}" data-contact-label="{{ field.name }}">{{ field.label }}</label></div><p id="{{ field.auto_id }}_helptext" class="contact-help" data-contact-copy="privacy">{{ field.help_text }}</p>{% include 'contacts/field_errors.html' %}</div>
+          {% elif field.name != 'website' %}<div class="contact-field{% if field.name == 'email' or field.name == 'phone' %} contact-field-half{% endif %}"><label for="{{ field.id_for_label }}"><span data-contact-label="{{ field.name }}">{{ field.label }}</span>{% if field.field.required %}<span class="contact-required" aria-hidden="true">*</span>{% else %}<span class="contact-optional">Opcional</span>{% endif %}</label>{{ field }}{% if field.help_text %}<p id="{{ field.auto_id }}_helptext" class="contact-help">{{ field.help_text }}</p>{% endif %}{% include 'contacts/field_errors.html' %}</div>{% endif %}{% endfor %}
+          <button class="button button-primary contact-submit" type="submit"><span data-contact-copy="button">{{ contact_mode.button }}</span>{% include 'includes/icon.html' with name='arrow' %}</button>
+        </form>
+      </div>
+    </div>
+  </div></section>
+  {{ contact_config|json_script:'contact-modes' }}
+{% endblock %}

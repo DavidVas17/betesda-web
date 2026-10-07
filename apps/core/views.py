@@ -1,33 +1,38 @@
 from django.db import DatabaseError, connections
 from django.http import HttpRequest, HttpResponse, JsonResponse
-from django.shortcuts import render
+from django.shortcuts import redirect, render
+from django.templatetags.static import static
 
-from django.db.models import Q
-from django.utils import timezone
+from apps.events.selectors import upcoming_events
+from apps.news.selectors import published_posts
 
-from apps.events.models import Event
+from .content import MINISTRIES, VALUES
+
 
 def home(request: HttpRequest) -> HttpResponse:
-    now = timezone.now()
-
-    events = (
-        Event.objects
-        .filter(is_published=True)
-        .filter(
-            Q(ends_at__gte=now)
-            | Q(ends_at__isnull=True, starts_at__gte=now)
-        )
-        .order_by("starts_at")[:6]
-    )
-
     return render(
         request,
         "home.html",
         {
-            "events": events,
+            "events": upcoming_events(limit=3),
+            "posts": published_posts().order_by("-is_featured", "-published_at")[:3],
+            "ministries": MINISTRIES[:3],
         },
     )
-    
+
+
+def about(request: HttpRequest) -> HttpResponse:
+    return render(request, "core/about.html", {"values": VALUES})
+
+
+def ministries(request: HttpRequest) -> HttpResponse:
+    return render(request, "core/ministries.html", {"ministries": MINISTRIES})
+
+
+def favicon(request: HttpRequest) -> HttpResponse:
+    return redirect(static("images/favicon.ico"), permanent=True)
+
+
 def live(request: HttpRequest) -> JsonResponse:
     return JsonResponse({"status": "ok", "service": "betesda-web"})
 

@@ -1,148 +1,52 @@
-{% extends "base.html" %}
-
+{% extends 'base.html' %}
+{% load static %}
 {% block title %}Inicio | Betesda Rosa de Sarón{% endblock %}
-
 {% block content %}
-  <section class="hero">
-    <div class="container hero-grid">
+  <section class="home-hero">
+    <div class="container home-hero-grid">
       <div>
-        <p class="eyebrow">Villa Nueva, Guatemala</p>
+        <p class="eyebrow">Desde {{ site.founded }} · Villa Nueva, Guatemala</p>
         <h1>Un lugar para crecer en la fe y servir a la comunidad</h1>
-        <p class="hero-copy">
-          Desde 2006 acompañamos a niños, jóvenes, adultos y familias por medio de la
-          enseñanza, la unidad y el servicio.
-        </p>
+        <p class="hero-copy">Somos una iglesia que acompaña a niños, jóvenes, adultos y familias. Unidos en Cristo, compartimos esperanza y ponemos nuestra fe en acción.</p>
         <div class="actions">
-          <a class="button button-primary" href="#eventos">Ver próximas actividades</a>
-          <a class="button button-secondary" href="#contacto">Cómo llegar</a>
+          <a class="button button-primary" href="{% url 'core:about' %}">Conoce nuestra iglesia {% include 'includes/icon.html' with name='arrow' %}</a>
+          <a class="button button-secondary" href="{% url 'contacts:contact' %}">Comparte tu petición de oración</a>
         </div>
       </div>
-      <aside class="service-card" aria-labelledby="service-title">
-        <p class="eyebrow">Próximo servicio</p>
-        <h2 id="service-title">Información en preparación</h2>
-        <p>La administración podrá publicar aquí los horarios y anuncios destacados.</p>
+      <aside class="welcome-card">
+        <img class="hero-logo" src="{% static 'images/logo-betesda.jpg' %}" width="280" height="280" alt="Logotipo de Ministerios Pentecostés Betesda Rosa de Sarón">
+        <p class="eyebrow">Bienvenido a Betesda</p>
+        <h2>Una comunidad para cada generación</h2>
+        <p>{{ site.slogan }}</p>
+        <a class="welcome-location" href="{{ site.map_url }}" target="_blank" rel="noopener noreferrer">{% include 'includes/icon.html' with name='pin' %}<span>Santa Isabel II, Villa Nueva<br><strong>Cómo llegar →</strong></span></a>
       </aside>
     </div>
   </section>
-
-  <section id="nosotros" class="section">
-    <div class="container narrow">
-      <p class="eyebrow">Nuestra misión</p>
-      <h2>Formar discípulos y llevar esperanza</h2>
-      <p>
-        Predicamos el evangelio de Jesucristo mediante la enseñanza de la Palabra de Dios,
-        el amor, la unidad y el trabajo en equipo, sirviendo integralmente a nuestra comunidad.
-      </p>
+  <section class="section">
+    <div class="container mission-layout">
+      <div><p class="eyebrow">Nuestra misión</p><h2>Formar discípulos y llevar esperanza</h2><a class="text-link" href="{% url 'core:about' %}">Nuestra historia y valores {% include 'includes/icon.html' with name='arrow' %}</a></div>
+      <div><p>{{ site.mission }}</p><blockquote class="mission-quote">“{{ site.slogan }}”</blockquote></div>
     </div>
   </section>
-
-  <section id="ministerios" class="section section-muted">
+  <section class="section section-muted">
     <div class="container">
-      <p class="eyebrow">Ministerios</p>
-      <h2>Un espacio para cada etapa de la vida</h2>
-      <div class="card-grid">
-        <article><h3>Niños</h3><p>Enseñanza comprensible, dinámica y amorosa.</p></article>
-        <article><h3>Jóvenes</h3><p>Discipulado y desarrollo de dones para servir.</p></article>
-        <article><h3>Familias</h3><p>Fortalecimiento espiritual, familiar y comunitario.</p></article>
-        <article><h3>Comunidad</h3><p>Evangelismo, acción social y acompañamiento.</p></article>
-      </div>
+      <div class="section-heading"><div><p class="eyebrow">La vida de nuestra iglesia</p><h2>Próximas actividades</h2></div><a class="text-link" href="{% url 'events:list' %}">Todos los eventos {% include 'includes/icon.html' with name='arrow' %}</a></div>
+      {% if events %}<div class="content-grid">{% for event in events %}{% include 'includes/event_card.html' %}{% endfor %}</div>
+      {% else %}{% include 'includes/empty_state.html' with icon='calendar' heading='Pronto tendremos nuevas actividades' copy='Consulta la página de eventos para conocer nuestras próximas reuniones y actividades.' %}{% endif %}
     </div>
   </section>
-
-  <section id="eventos" class="section events-section">
-  <div class="container">
-
-    <div class="section-heading">
-      <div>
-        <p class="eyebrow">Eventos y actividades</p>
-        <h2>Próximas actividades</h2>
-      </div>
-
-      <p>
-        Conoce las próximas actividades de Betesda Rosa de Sarón.
-      </p>
-    </div>
-
-    {% if events %}
-
-      <div class="events-grid">
-        {% for event in events %}
-
-          <article class="event-card">
-
-            {% if event.cover_image %}
-              <div class="event-card-image">
-                <img
-                  src="{{ event.cover_image.url }}"
-                  alt="{{ event.title }}"
-                >
-              </div>
-            {% endif %}
-
-            <div class="event-card-content">
-
-              <div class="event-date">
-                <span class="event-day">
-                  {{ event.starts_at|date:"d" }}
-                </span>
-
-                <span>
-                  {{ event.starts_at|date:"M Y" }}
-                </span>
-              </div>
-
-              <h3>{{ event.title }}</h3>
-
-              <p>{{ event.summary }}</p>
-
-              <div class="event-info">
-
-                <span>
-                  📅 {{ event.starts_at|date:"d/m/Y" }}
-                </span>
-
-                <span>
-                  🕐 {{ event.starts_at|date:"H:i" }}
-                </span>
-
-                <span>
-                  📍 {{ event.location }}
-                </span>
-
-              </div>
-
-            </div>
-
-          </article>
-
-        {% endfor %}
-      </div>
-
-    {% else %}
-
-      <div class="events-empty">
-        <p class="eyebrow">Próximamente</p>
-        <h3>No hay actividades publicadas por el momento</h3>
-        <p>
-          Muy pronto encontrarás aquí nuestros próximos eventos.
-        </p>
-      </div>
-
-    {% endif %}
-
-  </div>
-</section>
-
-  <section id="contacto" class="section contact-band">
-    <div class="container split">
-      <div>
-        <p class="eyebrow">Contacto</p>
-        <h2>Estamos para servirte</h2>
-      </div>
-      <div>
-        <p>13 calle 13-02, colonia Santa Isabel II, proyectos, zona 3 de Villa Nueva.</p>
-        <p><a href="tel:+50241713008">4171-3008</a></p>
-      </div>
+  <section class="section">
+    <div class="container">
+      <div class="section-heading"><div><p class="eyebrow">Ministerios</p><h2>Un espacio para crecer y participar</h2></div><a class="text-link" href="{% url 'core:ministries' %}">Conocer los siete ministerios {% include 'includes/icon.html' with name='arrow' %}</a></div>
+      <div class="content-grid">{% for ministry in ministries %}<article class="ministry-card"><p class="card-kicker">{{ ministry.tag }}</p><h3>{{ ministry.name }}</h3><p>{{ ministry.description }}</p><a class="text-link" href="{% url 'core:ministries' %}#{{ ministry.slug }}">Conoce este ministerio {% include 'includes/icon.html' with name='arrow' %}</a></article>{% endfor %}</div>
     </div>
   </section>
+  <section id="noticias" class="section section-muted" aria-labelledby="home-news-title">
+    <div class="container">
+      <div class="section-heading"><div><p class="eyebrow">Mantente al día</p><h2 id="home-news-title">Noticias y anuncios</h2></div><a class="text-link" href="{% url 'news:list' %}">Todas las noticias {% include 'includes/icon.html' with name='arrow' %}</a></div>
+      {% if posts %}<div class="content-grid">{% for post in posts %}{% include 'includes/post_card.html' %}{% endfor %}</div>
+      {% else %}{% include 'includes/empty_state.html' with icon='news' heading='Pronto compartiremos nuevas noticias' copy='Aquí encontrarás los anuncios y novedades de nuestra comunidad. También puedes visitar la página de noticias.' %}{% endif %}
+    </div>
+  </section>
+  {% include 'includes/invitation.html' %}
 {% endblock %}

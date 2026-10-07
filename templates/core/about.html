@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block title %}Nosotros | Betesda Rosa de Sarón{% endblock %}
+{% block content %}
+  {% include 'includes/page_heading.html' with eyebrow='Nuestra iglesia' heading='Una historia de fe, unidad y servicio' intro='Conoce quiénes somos, lo que creemos y el propósito que nos une como comunidad.' %}
+  <section class="section"><div class="container history-layout"><div class="history-year"><span>Desde</span><strong>{{ site.founded }}</strong><span>Villa Nueva, Guatemala</span></div><div><p class="eyebrow">Nuestra historia</p><h2>Crecer juntos, servir con amor</h2><p>{{ site.history }}</p><p>Acompañamos a las familias de Villa Nueva y comunidades cercanas, ofreciendo espacios de formación cristiana y participación para cada etapa de la vida.</p></div></div></section>
+  <section class="section section-muted"><div class="container"><div class="content-grid"><article class="purpose-card"><span class="card-number">01</span><h2>Misión</h2><p>{{ site.mission }}</p></article><article class="purpose-card"><span class="card-number">02</span><h2>Visión</h2><p>{{ site.vision }}</p></article><article class="purpose-card"><span class="card-number">03</span><h2>Propósito</h2><p>{{ site.purpose }}</p></article></div><blockquote class="institutional-quote">“{{ site.slogan }}”</blockquote></div></section>
+  <section class="section"><div class="container"><div class="section-heading"><div><p class="eyebrow">Nuestra forma de vivir la fe</p><h2>Valores que nos guían</h2></div></div><div class="values-grid">{% for name, description in values %}<article><span class="value-dot" aria-hidden="true"></span><h3>{{ name }}</h3><p>{{ description }}</p></article>{% endfor %}</div></div></section>
+  {% include 'includes/invitation.html' %}
+{% endblock %}

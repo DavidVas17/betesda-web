@@ -33,7 +33,16 @@ class PostAdmin(admin.ModelAdmin):
     readonly_fields = ("author", "image_preview", "reading_time", "created_at", "updated_at")
     save_on_top = True
     list_per_page = 25
-    view_on_site = False  # La pagina publica de detalle aun no existe.
+
+    def view_on_site(self, obj):
+        if (
+            obj.status == Post.Status.PUBLISHED
+            and obj.published_at
+            and obj.published_at <= timezone.now()
+        ):
+            return obj.get_absolute_url()
+        return None
+
     actions = (
         "publish_posts",
         "back_to_draft",

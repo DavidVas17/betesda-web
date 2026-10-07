@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+{% block title %}{{ event.title }} | Eventos | Betesda Rosa de Sarón{% endblock %}
+{% block description %}{{ event.summary }}{% endblock %}
+{% block content %}
+  {% include 'includes/page_heading.html' with eyebrow='Eventos y actividades' heading=event.title intro=event.summary %}
+  <section class="section"><div class="container detail-layout"><article class="prose">{% if event.cover_image %}<img class="detail-cover" src="{{ event.cover_image.url }}" alt="{{ event.title }}" width="960" height="540">{% endif %}<h2>Sobre esta actividad</h2>{{ event.description|linebreaks }}<a class="text-link" href="{% url 'events:list' %}">← Volver a eventos</a></article><aside class="detail-sidebar"><p class="eyebrow">Planifica tu visita</p><h2>Fecha y lugar</h2><dl><dt>Fecha</dt><dd>{{ event.starts_at|date:'l, d F Y' }}</dd><dt>Hora de inicio</dt><dd>{{ event.starts_at|date:'H:i' }} h</dd>{% if event.ends_at %}<dt>Finaliza</dt><dd>{{ event.ends_at|date:'d M Y · H:i' }} h</dd>{% endif %}<dt>Lugar</dt><dd>{{ event.location }}</dd></dl><a class="button button-primary" href="{% url 'contacts:contact' %}?tipo=contacto">Consultar esta actividad</a></aside></div></section>
+{% endblock %}
