@@ -4,6 +4,7 @@ from django.contrib import admin
 from django.urls import include, path
 
 urlpatterns = [
+    path("panel/", include("apps.backoffice.panel.urls")),
     path("admin/", admin.site.urls),
     path("contacto/", include("apps.contacts.urls")),
     path("eventos/", include("apps.events.urls")),

@@ -1,0 +1,38 @@
+{% extends 'panel/base.html' %}
+{% block content %}
+{% include 'panel/heading.html' with heading=form_title intro=form_intro %}
+<div class="p-editor-layout">
+  <section class="p-card p-form-card" aria-label="{{ form_title|default:panel_title }}">
+    <div class="p-card-heading"><div><h2>{{ extra_heading|default:'Información' }}</h2><p>Los campos con <span class="p-required">*</span> son obligatorios.</p></div>{% if preview_url %}<a class="p-text-link" href="{{ preview_url }}" target="_blank" rel="noopener">Ver en el sitio {% include 'panel/icon.html' with name='external' %}</a>{% endif %}</div>
+    <form method="post" enctype="multipart/form-data" class="p-form" data-editor-form>
+      {% csrf_token %}{% if object.image %}<figure class="p-edit-photo-preview"><img src="{{ object.image.url }}" alt="{{ object.alt_text }}" width="640" height="360"><figcaption>Fotografía del álbum</figcaption></figure>{% endif %}{% include 'panel/fields.html' %}
+      <div class="p-form-actions">{% if can_save != False %}<button class="p-button p-button-primary" type="submit">{% include 'panel/icon.html' with name='check' %}{{ submit_label|default:'Guardar cambios' }}</button>{% endif %}{% if cancel_url %}<a class="p-button p-button-secondary" href="{{ cancel_url }}">{% if can_save == False %}Volver al listado{% else %}Cancelar{% endif %}</a>{% endif %}{% if delete_url %}<a class="p-text-link p-text-danger p-action-end" href="{{ delete_url }}">{% include 'panel/icon.html' with name='trash' %}Eliminar</a>{% endif %}</div>
+    </form>
+  </section>
+  <aside class="p-card p-helper-card">
+    <span class="p-helper-icon">{% if panel_active == 'users' or panel_active == 'account' %}{% include 'panel/icon.html' with name='lock' %}{% else %}{% include 'panel/icon.html' with name='edit' %}{% endif %}</span>
+    <h2>{% if can_save == False %}Información guardada{% else %}Un paso a la vez{% endif %}</h2>
+    <p>
+      {% if can_save == False %}Puedes consultar los datos de este elemento. El administrador puede otorgarte acceso para modificarlo.
+      {% elif form_help %}{{ form_help }}
+      {% elif panel_active == 'users' %}Cada integrante necesita una cuenta personal. Las cuentas del equipo pueden gestionar contenido y atender mensajes.
+      {% elif panel_active == 'account' %}Usa una contraseña personal y segura. Evita compartirla o reutilizarla en otros servicios.
+      {% elif panel_active == 'settings' %}Mantén actualizados los datos y los enlaces de la iglesia para que nuestra comunidad pueda encontrarnos.
+      {% else %}Completa la información con palabras claras. Los cambios se guardarán cuando pulses el botón al final del formulario.
+      {% endif %}
+    </p>
+    {% if password_url %}<a class="p-button p-button-secondary" href="{{ password_url }}">{% include 'panel/icon.html' with name='lock' %}Cambiar contraseña</a>{% endif %}
+    {% if can_save != False %}
+      <div class="p-helper-divider"></div><strong>Antes de guardar</strong>
+      <p>
+        {% if panel_active == 'users' %}Revisa el correo y el estado de la cuenta. Una cuenta inactiva no puede ingresar.
+        {% elif panel_active == 'account' %}Sigue las recomendaciones junto a los campos. El cambio se aplica al guardar el formulario.
+        {% elif panel_active == 'settings' %}Comprueba que los números y los enlaces sean correctos. La información se actualizará en el sitio público.
+        {% else %}Revisa los textos, las fechas y las imágenes para que la información sea fácil de entender. Los borradores permanecen privados hasta publicarse.
+        {% endif %}
+      </p>
+    {% endif %}
+  </aside>
+</div>
+{% block after_form %}{% endblock %}
+{% endblock %}

@@ -6,12 +6,12 @@ La fuente es `Proyecto_Seminario_Betesda_Rosa_de_Saron_Diseno_Unificado.pdf`, pr
 | --- | --- | --- |
 | Nombre, misión, visión, propósito y lema | Página 2 | Inicio, Nosotros y pie de página |
 | Diez valores institucionales | Páginas 2–3 | Nosotros |
-| Logotipo oficial | Imagen de la página 4 | Menú principal, portada, BackOffice y favicons |
+| Logotipo oficial | Nuevo archivo proporcionado por el cliente, octubre de 2026 | Menú principal, portada, BackOffice y favicons |
 | Fundación en 2006 e historia | Página 4 | Inicio y Nosotros |
 | Dirección, teléfono y Facebook | Página 4 | Contacto y pie de página |
 | Siete ministerios y sus descripciones | Página 5 | Ministerios y adelanto en Inicio |
 
-El logo se conserva como `static/images/logo-betesda.jpg`, extraído del PDF sin cambiar el diseño. Los textos institucionales están centralizados en `apps/core/content.py`. La configuración del BackOffice prevalece sobre los datos de contacto de referencia cuando contiene valores.
+El nuevo logo del cliente se conserva íntegro en `static/images/logo-betesda-original.png`. La versión para mostrar en el sitio es `static/images/logo-betesda.png`, con el margen blanco exterior ajustado y el dibujo completo. Sustituye al logo anterior del documento. Los textos institucionales están centralizados en `apps/core/content.py`. La configuración del BackOffice prevalece sobre los datos de contacto de referencia cuando contiene valores.
 
 El documento indica que no existe un correo institucional. El sitio no inventa uno: solo muestra correo oficial si se configura en el BackOffice. Tampoco se inventan horarios de servicio, nombres de pastores, eventos, noticias ni fotografías; el contenido dinámico proviene de registros publicados en el panel.
 
@@ -34,4 +34,6 @@ Contacto incluye un mapa interactivo de Google Maps del lugar **iglesia rosa de 
 
 Un enlace personalizado en **Configuración del sitio** sigue prevaleciendo. Si se configura otra ubicación, el mapa se basa en la dirección configurada. El mapa requiere conexión a Internet y no solicita la ubicación del visitante.
 
-Los favicons ICO, PNG y el icono de Apple se generan del logotipo existente, conservando su diseño. Se comparten entre el sitio público, el panel y su pantalla de acceso.
+Los favicons ICO, PNG y el icono de Apple se generan del nuevo logotipo, conservando su diseño, con `docker compose exec web python tools/generate_brand_assets.py`. Se comparten entre el sitio público, el panel y su pantalla de acceso. Los archivos tienen nombres nuevos para actualizar los iconos almacenados por el navegador.
+
+El sitio público combina terracota (`#9C4F34`), verde bosque (`#214A3B`), dorado (`#EBC16D`) y crema (`#FBF2E4`). La portada usa un fondo verde profundo; los encabezados internos, terracota, y las secciones alternan tonos cálidos. El BackOffice utiliza un fondo beige más oscuro con tarjetas claras para facilitar la lectura. El logo se muestra completo y mantiene sus proporciones.

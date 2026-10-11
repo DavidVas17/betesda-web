@@ -34,10 +34,15 @@ docker compose exec web python manage.py bootstrap_admin
 Antes del último comando, cambie `DJANGO_SUPERUSER_PASSWORD` dentro de `.env`. Luego abra:
 
 - Sitio: <http://localhost:8000>
-- Administración: <http://localhost:8000/admin/>
+- BackOffice: <http://localhost:8000/panel/>
+- Administración técnica: <http://localhost:8000/admin/>
 - Estado: <http://localhost:8000/health/ready/>
 
 ## Flujo diario
+
+El [nuevo BackOffice](docs/PANEL.md) tiene pantallas propias para administrar eventos, noticias,
+fotografías, solicitudes y datos de contacto. Usa las mismas cuentas, permisos y base de datos del
+sitio; no requiere migraciones adicionales.
 
 ```bash
 make up          # iniciar

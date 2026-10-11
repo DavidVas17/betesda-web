@@ -4,7 +4,7 @@
 {% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | {{ site_title|default:"Panel Betesda" }}{% endblock %}
 
 {% block extrastyle %}{{ block.super }}
-<link rel="stylesheet" href="{% static 'backoffice/css/admin.css' %}">
+<link rel="stylesheet" href="{% static 'backoffice/css/admin.css' %}?v=brand-20261010">
 {% endblock %}
 
 {% block extrahead %}{{ block.super }}
@@ -15,7 +15,7 @@
 {% block branding %}
 <div id="site-name">
   <a class="bo-brand" href="{% url 'admin:index' %}">
-    <img class="bo-brand__mark" src="{% static 'images/logo-betesda.jpg' %}" width="48" height="48" alt="Logo de Betesda Rosa de Sarón">
+    <img class="bo-brand__mark" src="{% static 'images/logo-betesda.png' %}" width="76" height="48" alt="Logo de Betesda Rosa de Sarón">
     <span class="bo-brand__copy">
       <strong>Betesda Rosa de Sarón</strong>
       <small>BackOffice</small>
@@ -25,6 +25,7 @@
 {% endblock %}
 
 {% block userlinks %}
+  <a href="{% url 'panel:dashboard' %}">Panel de la iglesia</a> /
   {% if bo_new_messages %}
     <a class="bo-bell" href="{% url 'admin:contacts_contactmessage_changelist' %}?status__exact=NEW"
        title="Mensajes de contacto sin atender">

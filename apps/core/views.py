@@ -30,7 +30,7 @@ def ministries(request: HttpRequest) -> HttpResponse:
 
 
 def favicon(request: HttpRequest) -> HttpResponse:
-    return redirect(static("images/favicon.ico"), permanent=True)
+    return redirect(static("images/favicon-betesda.ico"), permanent=True)
 
 
 def live(request: HttpRequest) -> JsonResponse:

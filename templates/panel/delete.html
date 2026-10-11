@@ -1,0 +1,5 @@
+{% extends 'panel/base.html' %}
+{% block content %}
+{% include 'panel/heading.html' with heading='Confirmar eliminación' intro='Revisa la información antes de continuar.' %}
+<section class="p-card p-confirm-card"><span class="p-confirm-icon">{% include 'panel/icon.html' with name='trash' %}</span><h2>¿Eliminar {{ object_label|default:'este elemento' }}?</h2><p class="p-confirm-name">{{ object }}</p><p>{{ delete_message|default:'Esta acción es permanente. El elemento dejará de estar disponible en el panel y en el sitio público.' }}</p><form method="post">{% csrf_token %}<div class="p-form-actions"><button class="p-button p-button-danger" type="submit">{% include 'panel/icon.html' with name='trash' %}Sí, eliminar</button><a class="p-button p-button-secondary" href="{{ cancel_url }}">Cancelar</a></div></form></section>
+{% endblock %}

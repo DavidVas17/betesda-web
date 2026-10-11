@@ -1,0 +1,12 @@
+{% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+{% if form.non_field_errors %}<div class="p-form-errors" role="alert"><strong>Revisa estos datos antes de continuar.</strong>{{ form.non_field_errors }}</div>{% endif %}
+<div class="p-form-grid">
+{% for field in form.visible_fields %}
+  <div class="p-field{% if field.field.widget.input_type == 'checkbox' %} p-field-check{% endif %}{% if field.name == 'title' or field.name == 'summary' or field.name == 'excerpt' or field.name == 'institution_name' or field.name == 'slogan' or field.name == 'location' or field.name == 'cover_image' or field.name == 'image' or field.name == 'description' or field.name == 'body' or field.name == 'internal_notes' or field.name == 'address' or field.name == 'message' or field.name == 'mission' or field.name == 'vision' or field.name == 'privacy_notice' or field.name == 'groups' or field.name == 'user_permissions' or field.name == 'images' or field.name == 'photos' or field.name == 'alt_text' %} p-field-wide{% endif %}{% if field.errors %} p-field-invalid{% endif %}">
+    {% if field.field.widget.input_type == 'checkbox' %}<label class="p-checkbox" for="{{ field.id_for_label }}">{{ field }}<span>{{ field.label }}</span></label>{% else %}<label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %}<span class="p-required" aria-hidden="true"> *</span>{% else %}<span class="p-field-optional">Opcional</span>{% endif %}</label>{% if field.field.widget.input_type == 'file' and field.value %}{% if field.value.url %}<a class="p-current-image" href="{{ field.value.url }}" target="_blank" rel="noopener" aria-label="Ver imagen actual"><img src="{{ field.value.url }}" alt="Imagen actual" loading="lazy" width="180" height="120"></a>{% endif %}{% endif %}{{ field }}{% endif %}
+    {% if field.help_text %}<div class="p-field-help"{% if field.auto_id %} id="{{ field.auto_id }}_helptext"{% endif %}>{{ field.help_text|safe }}</div>{% endif %}
+    {% if field.errors %}<div class="p-field-errors"{% if field.auto_id %} id="{{ field.auto_id }}_error"{% endif %}>{{ field.errors }}</div>{% endif %}
+    {% if field.field.widget.input_type == 'file' %}<div class="p-upload-preview" data-upload-preview-for="{{ field.id_for_label }}" hidden aria-live="polite"></div>{% endif %}
+  </div>
+{% endfor %}
+</div>

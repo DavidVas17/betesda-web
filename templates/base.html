@@ -7,8 +7,8 @@
     <meta name="description" content="{% block description %}Conoce Betesda Rosa de Sarón: nuestra iglesia, ministerios, eventos y comunidad en Villa Nueva, Guatemala.{% endblock %}">
     <title>{% block title %}Betesda Rosa de Sarón{% endblock %}</title>
     {% include 'includes/favicons.html' %}
-    <link rel="stylesheet" href="{% static 'css/app.css' %}">
-    <link rel="stylesheet" href="{% static 'css/site.css' %}">
+    <link rel="stylesheet" href="{% static 'css/app.css' %}?v=warm-20261010">
+    <link rel="stylesheet" href="{% static 'css/site.css' %}?v=warm-20261010">
     {% block extra_css %}{% endblock %}
     <script src="{% static 'js/site.js' %}" defer></script>
     {% block extra_js %}{% endblock %}
@@ -18,7 +18,7 @@
     <header class="site-header">
       <nav class="nav container" aria-label="Navegación principal">
         <a class="brand" href="{% url 'core:home' %}" aria-label="Betesda Rosa de Sarón, ir al inicio">
-          <img class="brand-logo" src="{% static 'images/logo-betesda.jpg' %}" width="48" height="48" alt="">
+          <img class="brand-logo" src="{% static 'images/logo-betesda.png' %}" width="88" height="56" alt="">
           <span class="brand-copy">Betesda<span>Rosa de Sarón</span></span>
         </a>
         <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-navigation">

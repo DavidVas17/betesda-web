@@ -1,0 +1,55 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>{% block title %}{{ panel_title|default:'Panel de la iglesia' }}{% endblock %} · Betesda</title>
+  {% include 'includes/favicons.html' %}
+  <link rel="stylesheet" href="{% static 'panel/css/panel.css' %}?v=warm-20261010">
+  {% block extra_css %}{% endblock %}
+  <script src="{% static 'panel/js/panel.js' %}?v=202610-panel" defer></script>
+  {% block extra_js %}{% endblock %}
+</head>
+<body class="p-app">
+  <a class="p-skip" href="#contenido">Saltar al contenido</a>
+  <div class="p-shell">
+    <aside class="p-sidebar" id="panel-navigation" aria-label="Navegación del panel">
+      <a class="p-brand" href="{% url 'panel:dashboard' %}">
+        <img src="{% static 'images/logo-betesda.png' %}" width="112" height="74" alt="Betesda Rosa de Sarón">
+        <span>Panel de la iglesia</span>
+      </a>
+      <div class="p-sidebar-heading">MI ESPACIO DE TRABAJO</div>
+      <nav class="p-nav" aria-label="Secciones">
+        {% for item in panel_navigation %}
+          <a class="p-nav-item{% if item.active %} is-active{% endif %}" href="{{ item.url }}"{% if item.active %} aria-current="page"{% endif %}>
+            {% include 'panel/icon.html' with name=item.icon %}<span>{{ item.label }}</span>{% if item.badge %}<span class="p-nav-badge" aria-label="{{ item.badge }} nuevos">{{ item.badge }}</span>{% endif %}
+          </a>
+        {% endfor %}
+      </nav>
+      <div class="p-sidebar-bottom">
+        <a class="p-nav-item" href="{% url 'core:home' %}" target="_blank" rel="noopener">{% include 'panel/icon.html' with name='external' %}<span>Ver sitio de la iglesia</span></a>
+        {% if request.user.is_superuser %}<a class="p-nav-item p-nav-technical" href="{% url 'admin:index' %}">{% include 'panel/icon.html' with name='settings' %}<span>Administración técnica</span></a>{% endif %}
+        <div class="p-sidebar-user"><span class="p-avatar">{{ request.user.first_name|default:request.user.username|slice:':1'|upper }}</span><div><strong>{{ request.user.get_short_name|default:request.user.username }}</strong><span>{% if request.user.is_superuser %}Administrador{% else %}Equipo Betesda{% endif %}</span></div></div>
+        <form action="{% url 'panel:logout' %}" method="post">{% csrf_token %}<button class="p-nav-item p-logout" type="submit">{% include 'panel/icon.html' with name='log-out' %}<span>Cerrar sesión</span></button></form>
+      </div>
+    </aside>
+    <button type="button" class="p-menu-overlay" data-menu-close aria-label="Cerrar menú" hidden></button>
+    <div class="p-workspace">
+      <header class="p-topbar">
+        <div class="p-topbar-start"><button class="p-icon-button p-menu-toggle" type="button" data-menu-toggle aria-controls="panel-navigation" aria-expanded="false" aria-label="Abrir menú">{% include 'panel/icon.html' with name='menu' %}</button><nav class="p-breadcrumbs" aria-label="Ruta de navegación"><a href="{% url 'panel:dashboard' %}">Panel</a>{% include 'panel/icon.html' with name='chevron' %}<span>{{ panel_title|default:'Resumen' }}</span></nav></div>
+        <div class="p-topbar-actions">
+          {% if perms.contacts.view_contactmessage %}<a class="p-icon-button p-notification-link" href="{% url 'panel:message_list' %}?status=NEW" aria-label="Mensajes nuevos{% if panel_new_messages %}: {{ panel_new_messages }}{% endif %}" title="Mensajes nuevos">{% include 'panel/icon.html' with name='inbox' %}{% if panel_new_messages %}<span class="p-notification-dot"></span>{% endif %}</a>{% endif %}
+          <a class="p-account-link" href="{% url 'panel:account' %}" aria-label="Mi cuenta"><span class="p-avatar p-avatar-small">{{ request.user.first_name|default:request.user.username|slice:':1'|upper }}</span><span>Mi cuenta</span></a>
+        </div>
+      </header>
+      <main class="p-main" id="contenido" tabindex="-1">
+        {% if messages %}<div class="p-notices" aria-live="polite">{% for message in messages %}<div class="p-notice p-notice-{{ message.tags|default:'info' }}" role="{% if message.tags == 'error' %}alert{% else %}status{% endif %}">{% include 'panel/icon.html' with name='check' %}<span>{{ message }}</span><button type="button" class="p-icon-button" data-dismiss-notice aria-label="Ocultar notificación">{% include 'panel/icon.html' with name='close' %}</button></div>{% endfor %}</div>{% endif %}
+        {% block content %}{% endblock %}
+      </main>
+      <footer class="p-footer"><span>Betesda Rosa de Sarón</span><span>Un espacio para servir a nuestra comunidad.</span></footer>
+    </div>
+  </div>
+</body>
+</html>

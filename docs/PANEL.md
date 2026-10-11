@@ -1,61 +1,55 @@
-# Panel administrativo (backoffice)
+# BackOffice de la iglesia
 
-Guía para quien administra el contenido del sitio y para quien da mantenimiento al panel.
+Abra **http://localhost:8000/panel/** e ingrese con su cuenta actual. El panel tiene una interfaz
+propia, independiente de las pantallas del administrador de Django. Ambos usan los mismos modelos,
+la misma base de datos, los mismos archivos y las mismas cuentas. No es necesario copiar datos ni
+ejecutar migraciones para habilitarlo.
 
-## Qué incluye
+## Navegación
 
-| Área | Qué hace |
-| --- | --- |
-| Tablero de inicio | Saludo, accesos rápidos, pendientes con alertas, indicadores, próximos eventos, últimos mensajes, gráfico semanal y avance de la configuración del sitio. Cada bloque aparece solo si la persona tiene permiso para verlo. |
-| Aviso en la cabecera | Contador de mensajes de contacto sin atender, visible en todo el panel. |
-| Tema | Negro y dorado de la institución, modo claro/oscuro (usa el selector de Django) y adaptable a móvil. |
-| Eventos | Miniatura, estado temporal (Próximo, Hoy, En curso, Realizado), filtro por momento, publicar/destacar desde el listado, acciones masivas y duplicar como borrador. Valida que el fin no sea anterior al inicio. |
-| Noticias | Autor asignado automáticamente, tiempo de lectura, acciones masivas (publicar, borrador, archivar, destacar). |
-| Galería | Miniaturas, conteo de fotos, orden editable y **subida masiva** (arrastrar y soltar hasta 30 fotos de 8 MB) desde el botón «Subir varias fotos» del álbum. |
-| Mensajes de contacto | Estado con color, tiempo de espera, responsable, notas internas, responder por correo con un clic, acciones masivas y exportación CSV (solo administradores). |
-| Configuración del sitio | Registro único: el menú abre directamente el formulario. |
-| Usuarios | Rol con efecto real sobre permisos, activar/desactivar cuentas, y los administradores de rol no ven al superusuario. |
-| Bitácora | Historial de solo lectura de quién creó, modificó o eliminó contenido. |
+- **Inicio:** solicitudes pendientes, próximos eventos publicados, noticias, álbumes y acciones
+  rápidas según los permisos de la cuenta.
+- **Eventos:** buscar, crear, editar, destacar, publicar, retirar o duplicar como borrador. Las
+  fechas se capturan en la zona horaria configurada del proyecto.
+- **Noticias:** crear borradores, editar textos e imágenes, publicar, programar con una fecha
+  futura o archivar. La autoría se asigna a la cuenta que crea la noticia.
+- **Galería:** organizar álbumes y cargar hasta 30 fotografías a la vez, con un máximo de 8 MB
+  por imagen. Cada fotografía admite descripción alternativa, pie de foto y orden.
+- **Mensajes:** recibir los contactos y peticiones de oración enviados desde el sitio. Filtrar
+  por texto, tipo o estado; abrir la solicitud; asignar responsable; registrar notas internas;
+  marcar seguimiento, cerrar o reabrir. Los datos originales de la persona se conservan.
+  Los botones de correo y teléfono abren la aplicación correspondiente del equipo; el panel no
+  envía correos automáticamente. La exportación CSV respeta los filtros de la bandeja.
+- **Configuración:** actualizar nombre, lema, teléfono, correo, dirección, Facebook y Google Maps.
+  Los cambios se reflejan directamente en el sitio público.
+- **Mi cuenta:** editar los datos propios y cambiar la contraseña conservando la sesión actual.
+- **Usuarios:** disponible para la cuenta principal; crear colaboradores, cambiar sus datos,
+  desactivar acceso y restablecer contraseñas. Las cuentas principales se protegen de estas
+  operaciones. Una cuenta autora de noticias debe desactivarse antes que eliminarse.
+- **Actividad:** historial de cambios del equipo, disponible para la cuenta principal.
 
-## Roles
+## Acceso y protección
 
-Los permisos se definen en `apps/accounts/roles.py` y se aplican con `make roles`
-(`python manage.py setup_roles`). El contenedor lo ejecuta en cada arranque, así que
-**los permisos de estos dos grupos se restablecen a lo definido en el código**; para cambiarlos,
-edite `ROLE_PERMISSIONS` en un pull request.
+Solo entran cuentas activas con acceso de equipo (`is_staff`). Cada operación comprueba los permisos
+del modelo en el servidor. Las cuentas con permisos de lectura pueden consultar información, pero
+no guardar cambios. La creación de colaboradores mantiene el rol Editor y no permite otorgar
+privilegios de cuenta principal desde el formulario.
 
-| Permiso | Administradores | Editores de contenido |
-| --- | :---: | :---: |
-| Eventos | crear, editar, eliminar | crear, editar |
-| Noticias | crear, editar, eliminar | crear, editar |
-| Álbumes | crear, editar, eliminar | crear, editar |
-| Fotografías | crear, editar, eliminar | crear, editar, eliminar |
-| Mensajes de contacto | ver, editar, eliminar | ver, editar |
-| Exportar mensajes (CSV) | sí | no |
-| Configuración del sitio | ver, editar | no |
-| Usuarios | crear, editar | no |
-| Bitácora | ver | no |
+Las operaciones que cambian datos requieren POST y protección CSRF. Las eliminaciones muestran
+primero una confirmación. Los formularios validan los datos y las imágenes en el servidor. Las
+pantallas privadas no se almacenan en caché, los textos se escapan al mostrarlos y las exportaciones
+protegen los valores que una hoja de cálculo podría interpretar como fórmulas.
 
-Al guardar un usuario, el sistema lo coloca en el grupo de su rol y lo retira del otro.
-Las cuentas creadas desde el panel quedan con acceso al panel (`is_staff`) automáticamente.
+El diseño se adapta a computadora, tableta y teléfono. En pantallas pequeñas el botón de menú abre
+la navegación; también puede cerrarse con Escape. Los formularios y enlaces principales funcionan
+sin JavaScript.
 
-## Agregar un bloque al tablero
+La administración técnica sigue disponible en **/admin/** y contiene un enlace al nuevo panel.
 
-1. Agregue la consulta en `apps/backoffice/dashboard.py`, protegida con `user.has_perm(...)`.
-2. Muestre el resultado en `apps/backoffice/templates/admin/dashboard.html`.
-3. Cubra el caso con una prueba en `tests/test_backoffice.py`.
+## Validación local
 
-## Notas
-
-- Los eventos y noticias publicados tienen páginas de detalle y el enlace «Ver en el sitio» disponible desde el panel. Los borradores, noticias archivadas y noticias programadas para una fecha futura no se muestran al público.
-- La portada muestra hasta tres próximas actividades y hasta tres noticias; las páginas de Eventos, Noticias y Galería contienen los listados paginados y sus detalles.
-- Solo los álbumes publicados aparecen en la galería. Las fotografías conservan el texto alternativo, descripción y orden definidos en el panel.
-- Los datos de teléfono, dirección, correo y enlaces configurados se reflejan en Contacto y en el pie de página; cuando faltan, se usan los datos institucionales del documento proporcionado. No se inventa un correo institucional.
-
-## Solicitudes del formulario de contacto
-
-Los visitantes pueden enviar su nombre, correo electrónico, teléfono opcional, asunto y mensaje desde la página **Peticiones de oración / Contáctanos**, aceptando el uso de sus datos para atender la solicitud. No necesitan una cuenta. Cada envío queda clasificado como **Petición de oración** o **Contacto**, con estado **Nuevo**. Ambos tipos cuentan en **Mensajes nuevos** y en el aviso de la cabecera.
-
-El tipo aparece en los mensajes recientes, en el listado y en el detalle. Use el filtro **Tipo de solicitud** para separar peticiones de oración de consultas generales. El teléfono también se muestra en el listado y el detalle, puede buscarse y se incluye en la exportación CSV junto con el tipo de solicitud.
-
-Para atender una solicitud, abra **Mensajes nuevos** en el tablero y seleccione el asunto. Allí encontrará los datos del remitente y la petición, podrá responder por correo, asignar un responsable, agregar notas internas y cambiar el estado a **En seguimiento** o **Cerrado**. Los mensajes y las notas internas no se muestran en el sitio público.
+```bash
+docker compose exec -T web python manage.py check
+docker compose exec -T web ruff check apps/backoffice/panel tests/test_panel_access.py tests/test_panel_accounts.py tests/test_panel_content.py tests/test_panel_messages.py
+docker compose exec -T -e DJANGO_SETTINGS_MODULE=config.settings.test web pytest
+```

@@ -1,0 +1,45 @@
+from django.urls import path
+
+from . import auth, content, dashboard, messages, operations
+
+app_name = "panel"
+
+urlpatterns = [
+    path("", dashboard.dashboard, name="dashboard"),
+    path("ingresar/", auth.PanelLoginView.as_view(), name="login"),
+    path("salir/", auth.logout_view, name="logout"),
+    path("eventos/", content.event_list, name="event_list"),
+    path("eventos/nuevo/", content.event_create, name="event_create"),
+    path("eventos/<int:pk>/editar/", content.event_edit, name="event_edit"),
+    path("eventos/<int:pk>/eliminar/", content.event_delete, name="event_delete"),
+    path("eventos/<int:pk>/accion/", content.event_action, name="event_action"),
+    path("noticias/", content.news_list, name="news_list"),
+    path("noticias/nueva/", content.news_create, name="news_create"),
+    path("noticias/<int:pk>/editar/", content.news_edit, name="news_edit"),
+    path("noticias/<int:pk>/eliminar/", content.news_delete, name="news_delete"),
+    path("noticias/<int:pk>/accion/", content.news_action, name="news_action"),
+    path("galeria/", content.album_list, name="album_list"),
+    path("galeria/nuevo/", content.album_create, name="album_create"),
+    path("galeria/<int:pk>/", content.album_edit, name="album_edit"),
+    path("galeria/<int:pk>/eliminar/", content.album_delete, name="album_delete"),
+    path("galeria/<int:pk>/accion/", content.album_action, name="album_action"),
+    path("galeria/<int:pk>/fotos/subir/", content.album_upload, name="album_upload"),
+    path("galeria/<int:album_pk>/fotos/<int:pk>/editar/", content.photo_edit, name="photo_edit"),
+    path(
+        "galeria/<int:album_pk>/fotos/<int:pk>/eliminar/", content.photo_delete, name="photo_delete"
+    ),
+    path("mensajes/", messages.message_list, name="message_list"),
+    path("mensajes/exportar/", messages.message_export, name="message_export"),
+    path("mensajes/<int:pk>/", messages.message_detail, name="message_detail"),
+    path("mensajes/<int:pk>/accion/", messages.message_action, name="message_action"),
+    path("mensajes/<int:pk>/eliminar/", messages.message_delete, name="message_delete"),
+    path("configuracion/", operations.settings, name="settings"),
+    path("usuarios/", operations.user_list, name="user_list"),
+    path("usuarios/nuevo/", operations.user_create, name="user_create"),
+    path("usuarios/<int:pk>/editar/", operations.user_edit, name="user_edit"),
+    path("usuarios/<int:pk>/eliminar/", operations.user_delete, name="user_delete"),
+    path("usuarios/<int:pk>/contrasena/", operations.user_password, name="user_password"),
+    path("actividad/", operations.activity, name="activity"),
+    path("cuenta/", auth.account, name="account"),
+    path("cuenta/contrasena/", auth.password_change, name="password_change"),
+]

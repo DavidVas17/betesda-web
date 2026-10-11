@@ -57,7 +57,7 @@ def test_public_pages_have_full_navigation_and_active_link(client, route):
         assert f'href="{reverse(destination)}"' in content
     assert f'href="{reverse(route)}" aria-current="page"' in content
     assert "css/site.css" in content
-    assert "logo-betesda.jpg" in content
+    assert "logo-betesda.png" in content
 
 
 def test_home_has_limited_previews_and_contact_link_instead_of_form(client):
