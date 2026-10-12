@@ -1,0 +1,8 @@
+<article{% if full_page %} id="{{ ministry.slug }}"{% endif %} class="ministry-card">
+  <div class="ministry-card-top"><span class="icon-tile">{% include 'includes/icon.html' with name=ministry.icon %}</span><span class="card-number">{{ forloop.counter|stringformat:'02d' }}</span></div>
+  <p class="card-kicker">{{ ministry.tag }}</p>
+  {% if full_page %}<h2>{{ ministry.name }}</h2>{% else %}<h3>{{ ministry.name }}</h3>{% endif %}
+  <p>{{ ministry.description }}</p>
+  {% if full_page %}<a class="text-link" href="{% url 'contacts:contact' %}?tipo=contacto">Quiero conocer más {% include 'includes/icon.html' with name='arrow' %}</a>
+  {% else %}<a class="text-link" href="{% url 'core:ministries' %}#{{ ministry.slug }}">Conoce este ministerio {% include 'includes/icon.html' with name='arrow' %}</a>{% endif %}
+</article>

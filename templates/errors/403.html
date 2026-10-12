@@ -1,4 +1,4 @@
 {% extends "base.html" %}
 {% block title %}Acceso restringido{% endblock %}
-{% block content %}<section class="error-page"><h1>Acceso restringido</h1><p>No tiene permiso para consultar este contenido.</p></section>{% endblock %}
+{% block content %}<section class="error-page"><p class="eyebrow">Error 403</p><h1>Acceso restringido</h1><p>No tiene permiso para consultar este contenido.</p><a class="button button-primary" href="/">Volver al inicio {% include 'includes/icon.html' with name='arrow' %}</a></section>{% endblock %}
 

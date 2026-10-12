@@ -53,6 +53,7 @@ MINISTRIES = [
         "name": "Ministerio Infantil",
         "tag": "Niños",
         "slug": "infantil",
+        "icon": "baby",
         "description": (
             "Enseñanza de la Palabra de Dios de manera comprensible, dinámica y amorosa."
         ),
@@ -61,6 +62,7 @@ MINISTRIES = [
         "name": "Ministerio de Jóvenes",
         "tag": "Jóvenes",
         "slug": "jovenes",
+        "icon": "sparkles",
         "description": (
             "Acompañamiento, discipulado y capacitación para que los jóvenes desarrollen sus dones."
         ),
@@ -69,6 +71,7 @@ MINISTRIES = [
         "name": "Ministerio de Adultos",
         "tag": "Adultos",
         "slug": "adultos",
+        "icon": "users",
         "description": (
             "Fortalecimiento de la vida espiritual, familiar y comunitaria, "
             "promoviendo el compañerismo y el servicio."
@@ -78,12 +81,14 @@ MINISTRIES = [
         "name": "Ministerio de Adultos Mayores",
         "tag": "Adultos mayores",
         "slug": "adultos-mayores",
+        "icon": "hand-heart",
         "description": "Acompañamiento, respeto, cuidado y oportunidades de participación.",
     },
     {
         "name": "Evangelismo y Misiones",
         "tag": "Compartir la fe",
         "slug": "evangelismo",
+        "icon": "globe",
         "description": (
             "Acercamiento a las personas e iniciativas que llevan el mensaje de Cristo "
             "a la comunidad y más allá."
@@ -93,6 +98,7 @@ MINISTRIES = [
         "name": "Acción Social y Servicio Comunitario",
         "tag": "Servir",
         "slug": "accion-social",
+        "icon": "helping",
         "description": (
             "Identificación y atención organizada de las necesidades de nuestro entorno."
         ),
@@ -101,6 +107,7 @@ MINISTRIES = [
         "name": "Discipulado y Formación",
         "tag": "Crecer",
         "slug": "discipulado",
+        "icon": "book",
         "description": (
             "Capacitación de los creyentes en la Palabra de Dios, "
             "liderazgo, servicio y vida cristiana."

@@ -98,6 +98,8 @@ LOGIN_REDIRECT_URL = "/panel/"
 LOGOUT_REDIRECT_URL = "/"
 
 LANGUAGE_CODE = "es-gt"
+# El sitio solo existe en español: así un navegador en otro idioma no mezcla fechas en inglés.
+LANGUAGES = [("es-gt", "Español (Guatemala)")]
 TIME_ZONE = "America/Guatemala"
 USE_I18N = True
 USE_TZ = True

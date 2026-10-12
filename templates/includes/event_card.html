@@ -1,14 +1,14 @@
 <article class="content-card">
   {% if event.cover_image %}
-    <a class="content-card-image" href="{{ event.get_absolute_url }}"><img src="{{ event.cover_image.url }}" alt="{{ event.title }}" loading="lazy" width="640" height="360"></a>
+    <a class="content-card-image" href="{{ event.get_absolute_url }}" tabindex="-1" aria-hidden="true"><img src="{{ event.cover_image.url }}" alt="" loading="lazy" width="640" height="400"><span class="date-badge"><b>{{ event.starts_at|date:'d' }}</b><small>{{ event.starts_at|date:'M' }}</small></span></a>
   {% else %}
-    <a class="event-card-banner" href="{{ event.get_absolute_url }}" aria-label="Ver {{ event.title }}">
+    <a class="event-card-banner" href="{{ event.get_absolute_url }}" tabindex="-1" aria-hidden="true">
       <span>{{ event.starts_at|date:'d' }}</span><span>{{ event.starts_at|date:'F Y' }}</span>
       {% include 'includes/icon.html' with name='calendar' %}
     </a>
   {% endif %}
   <div class="content-card-body">
-    <p class="card-kicker">{{ event.starts_at|date:'d M Y' }} · {{ event.starts_at|date:'H:i' }} h</p>
+    <p class="card-kicker">{% include 'includes/icon.html' with name='clock' %}{{ event.starts_at|date:'l d M' }} · {{ event.starts_at|date:'H:i' }} h</p>
     <h3><a href="{{ event.get_absolute_url }}">{{ event.title }}</a></h3>
     <p>{{ event.summary }}</p>
     <p class="card-location">{% include 'includes/icon.html' with name='pin' %}{{ event.location }}</p>
