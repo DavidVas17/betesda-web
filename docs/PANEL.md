@@ -30,10 +30,9 @@ ejecutar migraciones para habilitarlo.
 
 ## Acceso y protección
 
-Solo entran cuentas activas con acceso de equipo (`is_staff`). Cada operación comprueba los permisos
-del modelo en el servidor. Las cuentas con permisos de lectura pueden consultar información, pero
-no guardar cambios. La creación de colaboradores mantiene el rol Editor y no permite otorgar
-privilegios de cuenta principal desde el formulario.
+Solo entran cuentas activas con acceso de equipo (`is_staff`). Lo que cada persona puede hacer lo
+deciden sus roles, que se combinan; la matriz completa está en [ROLES.md](ROLES.md). Cada operación
+comprueba los permisos en el servidor, y ningún formulario del panel puede crear un superusuario.
 
 Las operaciones que cambian datos requieren POST y protección CSRF. Las eliminaciones muestran
 primero una confirmación. Los formularios validan los datos y las imágenes en el servidor. Las
@@ -44,7 +43,8 @@ El diseño se adapta a computadora, tableta y teléfono. En pantallas pequeñas 
 la navegación; también puede cerrarse con Escape. Los formularios y enlaces principales funcionan
 sin JavaScript.
 
-La administración técnica sigue disponible en **/admin/** y contiene un enlace al nuevo panel.
+La administración técnica (**/admin/**, o la ruta de `DJANGO_ADMIN_URL`) es exclusiva del
+superusuario. Las cuentas del equipo que intenten entrar son enviadas al inicio de sesión del admin.
 
 ## Validación local
 

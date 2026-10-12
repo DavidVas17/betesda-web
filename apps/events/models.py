@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
@@ -17,12 +18,22 @@ class Event(TimeStampedModel):
     cover_image = models.ImageField("imagen", upload_to="events/%Y/%m/", blank=True)
     is_published = models.BooleanField("publicado", default=False, db_index=True)
     is_featured = models.BooleanField("destacado", default=False, db_index=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name="creado por",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        editable=False,
+        related_name="created_events",
+    )
 
     class Meta:
         ordering = ("starts_at",)
         indexes = [models.Index(fields=("is_published", "starts_at"), name="events_pub_start_idx")]
         verbose_name = "evento"
         verbose_name_plural = "eventos"
+        permissions = [("publish_event", "Puede publicar, despublicar y destacar eventos")]
 
     def __str__(self) -> str:
         return self.title

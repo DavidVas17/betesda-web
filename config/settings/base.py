@@ -19,6 +19,12 @@ DEBUG = env("DJANGO_DEBUG")
 ALLOWED_HOSTS = env("DJANGO_ALLOWED_HOSTS")
 CSRF_TRUSTED_ORIGINS = env("DJANGO_CSRF_TRUSTED_ORIGINS")
 
+# Ruta de la administración técnica (solo superusuario). En producción conviene usar una
+# ruta propia en lugar de la conocida "admin/". Debe terminar en "/" y no empezar con "/".
+ADMIN_URL = env.str("DJANGO_ADMIN_URL", default="admin/").strip("/") + "/"
+if ADMIN_URL in {"/", "panel/"}:
+    raise ValueError("DJANGO_ADMIN_URL debe ser una ruta propia, distinta de la raíz y del panel.")
+
 INSTALLED_APPS = [
     # El panel propio va antes del admin de Django para poder sobrescribir sus plantillas.
     "apps.backoffice.apps.BackofficeConfig",

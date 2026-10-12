@@ -35,14 +35,14 @@ Antes del último comando, cambie `DJANGO_SUPERUSER_PASSWORD` dentro de `.env`. 
 
 - Sitio: <http://localhost:8000>
 - BackOffice: <http://localhost:8000/panel/>
-- Administración técnica: <http://localhost:8000/admin/>
+- Administración técnica (solo superusuario): <http://localhost:8000/admin/>
 - Estado: <http://localhost:8000/health/ready/>
 
 ## Flujo diario
 
 El [nuevo BackOffice](docs/PANEL.md) tiene pantallas propias para administrar eventos, noticias,
-fotografías, solicitudes y datos de contacto. Usa las mismas cuentas, permisos y base de datos del
-sitio; no requiere migraciones adicionales.
+fotografías, solicitudes y datos de contacto. Quién puede hacer qué se define por roles: ver
+[docs/ROLES.md](docs/ROLES.md).
 
 ```bash
 make up          # iniciar

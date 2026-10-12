@@ -1,9 +1,17 @@
 import pytest
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Permission
 from django.test import Client
 from django.urls import reverse
 
+from apps.accounts.roles import (
+    CARE,
+    CHURCH_ADMIN,
+    COLLABORATOR,
+    COORDINATOR,
+    GALLERY,
+    READ_ONLY,
+    set_user_roles,
+)
 from apps.contacts.models import ContactMessage
 
 pytestmark = pytest.mark.django_db
@@ -12,9 +20,11 @@ User = get_user_model()
 
 @pytest.fixture
 def panel_staff():
-    return User.objects.create_user(
+    user = User.objects.create_user(
         username="panel-equipo", password="Betesda-Prueba-2026!", is_staff=True
     )
+    set_user_roles(user, [CHURCH_ADMIN.name])
+    return user
 
 
 @pytest.fixture
@@ -190,16 +200,23 @@ def test_panel_mutations_require_a_csrf_token(admin_user, route):
     assert response.status_code == 403
 
 
-@pytest.mark.parametrize("role", [User.Role.ADMIN, User.Role.EDITOR])
+@pytest.mark.parametrize("role", [COORDINATOR, COLLABORATOR, GALLERY, CARE, READ_ONLY])
 @pytest.mark.parametrize("route", ["user_list", "user_create", "activity"])
-def test_account_management_and_audit_require_superuser_even_with_permissions(client, role, route):
-    user = User.objects.create_user(username=f"responsable-{role}", is_staff=True, role=role)
-    user.user_permissions.add(
-        *Permission.objects.filter(content_type__app_label__in=("accounts", "admin"))
-    )
+def test_account_management_and_audit_are_only_for_church_admin(client, role, route):
+    user = User.objects.create_user(username=f"responsable-{role.key}", is_staff=True)
+    set_user_roles(user, [role.name])
     client.force_login(user)
 
     assert client.get(reverse(f"panel:{route}")).status_code == 403
+
+
+@pytest.mark.parametrize("route", ["user_list", "user_create", "activity"])
+def test_church_admin_manages_team_and_reads_activity(client, route):
+    user = User.objects.create_user(username="administracion", is_staff=True)
+    set_user_roles(user, [CHURCH_ADMIN.name])
+    client.force_login(user)
+
+    assert client.get(reverse(f"panel:{route}")).status_code == 200
 
 
 def test_deactivating_an_existing_staff_account_revokes_panel_access(client, panel_staff):

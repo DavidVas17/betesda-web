@@ -47,6 +47,7 @@ class ContactMessage(TimeStampedModel):
         indexes = [models.Index(fields=("status", "created_at"), name="contact_status_date_idx")]
         verbose_name = "mensaje de contacto"
         verbose_name_plural = "mensajes de contacto"
+        permissions = [("export_contactmessage", "Puede exportar mensajes de contacto")]
 
     def __str__(self) -> str:
         return f"{self.subject} - {self.name}"

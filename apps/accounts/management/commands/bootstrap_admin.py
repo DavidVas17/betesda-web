@@ -24,7 +24,6 @@ class Command(BaseCommand):
         user.is_staff = True
         user.is_superuser = True
         user.is_active = True
-        user.role = user_model.Role.ADMIN
         user.set_password(password)
         user.save()
 

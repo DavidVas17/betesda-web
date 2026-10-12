@@ -10,6 +10,7 @@ from django.urls import reverse
 from django.utils import timezone
 from PIL import Image
 
+from apps.accounts.roles import COORDINATOR, set_user_roles
 from apps.events.models import Event
 from apps.gallery.models import Album, Photo
 from apps.news.models import Post
@@ -20,7 +21,9 @@ User = get_user_model()
 
 @pytest.fixture
 def content_editor():
-    return User.objects.create_user(username="editor-contenido", is_staff=True)
+    user = User.objects.create_user(username="editor-contenido", is_staff=True)
+    set_user_roles(user, [COORDINATOR.name])
+    return user
 
 
 @pytest.fixture

@@ -103,7 +103,8 @@ def test_reader_can_review_messages_but_cannot_mutate_them(
 
     assert client.get(reverse("panel:message_list")).status_code == 200
     assert client.get(detail).status_code == 200
-    assert client.get(reverse("panel:message_export")).status_code == 200
+    # Ver una petición de oración no autoriza a sacar todas en un archivo.
+    assert client.get(reverse("panel:message_export")).status_code == 403
     assert (
         client.post(detail, {"status": "CLOSED", "internal_notes": "Manipulada"}).status_code == 403
     )

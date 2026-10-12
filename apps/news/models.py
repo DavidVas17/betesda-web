@@ -37,6 +37,7 @@ class Post(TimeStampedModel):
         indexes = [models.Index(fields=("status", "published_at"), name="news_status_date_idx")]
         verbose_name = "noticia o anuncio"
         verbose_name_plural = "noticias y anuncios"
+        permissions = [("publish_post", "Puede publicar, archivar y destacar noticias")]
 
     def __str__(self) -> str:
         return self.title

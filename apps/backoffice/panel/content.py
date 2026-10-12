@@ -1,6 +1,5 @@
 from django.contrib import messages
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION
-from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Count, Max, Q
 from django.http import HttpResponseBadRequest
@@ -14,7 +13,14 @@ from apps.gallery.forms import BulkPhotoUploadForm
 from apps.gallery.models import Album, Photo
 from apps.news.models import Post
 
-from .access import panel_required
+from .access import (
+    can_edit,
+    can_publish,
+    panel_required,
+    require_edit,
+    require_permission,
+    require_publish,
+)
 from .content_forms import AlbumForm, EventForm, PhotoForm, PostForm
 from .utils import audit, paginate, pagination_query, panel_render
 
@@ -26,9 +32,7 @@ PUBLICATION_CHOICES = (
 NEWS_CHOICES = (("all", "Todas"), *Post.Status.choices)
 
 
-def _require_permission(request, permission):
-    if not request.user.has_perm(permission):
-        raise PermissionDenied
+_require_permission = require_permission
 
 
 def _preview(obj):
@@ -87,8 +91,10 @@ def _list(request, *, model, section, singular, title, search_fields):
     can_change = request.user.has_perm(f"{app}.change_{model._meta.model_name}")
     can_delete = request.user.has_perm(f"{app}.delete_{model._meta.model_name}")
     can_add = request.user.has_perm(f"{app}.add_{model._meta.model_name}")
+    publish = can_publish(request.user, model)
     page_obj = paginate(request, queryset)
     for obj in page_obj:
+        obj.can_edit = can_change and can_edit(request.user, obj)
         obj.edit_url = reverse(f"panel:{singular}_edit", args=[obj.pk])
         obj.action_url = reverse(f"panel:{singular}_action", args=[obj.pk])
         allow_delete = can_delete
@@ -125,8 +131,9 @@ def _list(request, *, model, section, singular, title, search_fields):
             "status_choices": status_choices,
             "counts": counts,
             "can_change": can_change,
+            "can_publish": publish,
             "can_delete": can_delete,
-            "can_duplicate": can_change and can_add,
+            "can_duplicate": can_add,
             "create_url": reverse(f"panel:{singular}_create") if can_add else "",
             "pagination_query": pagination_query(request),
         },
@@ -178,7 +185,8 @@ def _content_form(request, *, model, form_class, singular, section, label, pk=No
     permission = (
         f"{model._meta.app_label}.{'add' if creating else 'change'}_{model._meta.model_name}"
     )
-    can_save = request.user.has_perm(permission)
+    can_save = request.user.has_perm(permission) and (creating or can_edit(request.user, obj))
+    publish = can_publish(request.user, model)
     form_title = (
         f"{'Crear' if creating else 'Editar'} {label.lower()}"
         if can_save
@@ -186,12 +194,16 @@ def _content_form(request, *, model, form_class, singular, section, label, pk=No
     )
     if request.method == "POST":
         _require_permission(request, permission)
-        form = form_class(request.POST, request.FILES, instance=obj)
+        if not creating:
+            require_edit(request, obj)
+        form = form_class(request.POST, request.FILES, instance=obj, can_publish=publish)
         if form.is_valid():
             with transaction.atomic():
                 saved = form.save(commit=False)
                 if creating and model is Post:
                     saved.author = request.user
+                elif creating:
+                    saved.created_by = request.user
                 saved.save()
                 form.save_m2m()
                 audit(
@@ -203,14 +215,19 @@ def _content_form(request, *, model, form_class, singular, section, label, pk=No
             messages.success(request, f"Se guardó {label.lower()} correctamente.")
             return redirect(f"panel:{singular}_edit", pk=saved.pk)
     else:
-        form = form_class(instance=obj, readonly=not can_save)
+        form = form_class(instance=obj, readonly=not can_save, can_publish=publish)
     return panel_render(
         request,
         "panel/form.html",
         {
             "form": form,
             "form_title": form_title,
-            "form_intro": "Completa la información y elige cuándo compartirla en el sitio web.",
+            "form_intro": (
+                "Completa la información y elige cuándo compartirla en el sitio web."
+                if publish
+                else "Se guardará como borrador. Una persona de coordinación lo revisará "
+                "y lo publicará en el sitio web."
+            ),
             "cancel_url": reverse(f"panel:{singular}_list"),
             "submit_label": "Guardar cambios",
             "object": obj,
@@ -299,13 +316,13 @@ def album_create(request):
 
 
 def _album_context(request, album, *, form=None, upload_form=None):
-    can_edit = request.user.has_perm("gallery.change_album")
+    edit_album = can_edit(request.user, album)
     can_add = (
         request.user.has_perm("gallery.add_photo")
         and request.user.has_perm("gallery.view_album")
-        and can_edit
+        and edit_album
     )
-    can_change_photo = request.user.has_perm("gallery.change_photo")
+    can_change_photo = request.user.has_perm("gallery.change_photo") and edit_album
     can_view_photo = request.user.has_perm("gallery.view_photo") or can_change_photo
     can_delete_photo = request.user.has_perm("gallery.delete_photo")
     photos = list(album.photos.order_by("order", "created_at", "pk"))
@@ -323,10 +340,16 @@ def _album_context(request, album, *, form=None, upload_form=None):
         "album": album,
         "object": album,
         "photos": photos,
-        "form": form if form is not None else AlbumForm(instance=album, readonly=not can_edit),
+        "form": form
+        if form is not None
+        else AlbumForm(
+            instance=album,
+            readonly=not edit_album,
+            can_publish=can_publish(request.user, Album),
+        ),
         "upload_form": upload_form if upload_form is not None else BulkPhotoUploadForm(),
-        "can_edit_album": can_edit,
-        "can_save": can_edit,
+        "can_edit_album": edit_album,
+        "can_save": edit_album,
         "can_add_photo": can_add,
         "can_change_photo": can_change_photo,
         "can_delete_photo": can_delete_photo,
@@ -346,7 +369,8 @@ def album_edit(request, pk):
     form = None
     if request.method == "POST":
         _require_permission(request, "gallery.change_album")
-        form = AlbumForm(request.POST, instance=album)
+        require_edit(request, album)
+        form = AlbumForm(request.POST, instance=album, can_publish=can_publish(request.user, Album))
         if form.is_valid():
             with transaction.atomic():
                 album = form.save()
@@ -435,7 +459,7 @@ def album_delete(request, pk):
         )
 
 
-@panel_required("events.change_event")
+@panel_required(("events.publish_event", "events.add_event"))
 @require_POST
 def event_action(request, pk):
     action = request.POST.get("action", "")
@@ -443,6 +467,8 @@ def event_action(request, pk):
         return HttpResponseBadRequest("La acción no es válida.")
     if action == "duplicate":
         _require_permission(request, "events.add_event")
+    else:
+        require_publish(request, Event)
     with transaction.atomic():
         event = get_object_or_404(Event.objects.select_for_update(), pk=pk)
         if action == "duplicate":
@@ -456,6 +482,7 @@ def event_action(request, pk):
                 cover_image=event.cover_image,
                 is_published=False,
                 is_featured=False,
+                created_by=request.user,
             )
             audit(request, event, flag=ADDITION, message="Evento duplicado como borrador.")
         else:
@@ -476,7 +503,7 @@ def event_action(request, pk):
     )
 
 
-@panel_required("news.change_post")
+@panel_required("news.publish_post")
 @require_POST
 def news_action(request, pk):
     action = request.POST.get("action", "")
@@ -498,7 +525,7 @@ def news_action(request, pk):
     return redirect("panel:news_list")
 
 
-@panel_required("gallery.change_album")
+@panel_required("gallery.publish_album")
 @require_POST
 def album_action(request, pk):
     action = request.POST.get("action", "")
@@ -519,6 +546,7 @@ def album_upload(request, pk):
     _require_permission(request, "gallery.view_album")
     _require_permission(request, "gallery.change_album")
     album = get_object_or_404(Album, pk=pk)
+    require_edit(request, album)
     form = BulkPhotoUploadForm(request.POST, request.FILES)
     if form.is_valid():
         files = form.cleaned_data["images"]
@@ -559,9 +587,10 @@ def album_upload(request, pk):
 def photo_edit(request, album_pk, pk):
     _require_permission(request, "gallery.view_album")
     photo = get_object_or_404(Photo.objects.select_related("album"), pk=pk, album_id=album_pk)
-    can_save = request.user.has_perm("gallery.change_photo")
+    can_save = can_edit(request.user, photo)
     if request.method == "POST":
         _require_permission(request, "gallery.change_photo")
+        require_edit(request, photo)
         form = PhotoForm(request.POST, request.FILES, instance=photo)
         if form.is_valid():
             with transaction.atomic():

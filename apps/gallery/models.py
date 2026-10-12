@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 
 from apps.core.models import TimeStampedModel
@@ -10,11 +11,21 @@ class Album(TimeStampedModel):
     description = models.TextField("descripcion", blank=True)
     event_date = models.DateField("fecha de la actividad", null=True, blank=True)
     is_published = models.BooleanField("publicado", default=False, db_index=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name="creado por",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        editable=False,
+        related_name="created_albums",
+    )
 
     class Meta:
         ordering = ("-event_date", "-created_at")
         verbose_name = "album"
         verbose_name_plural = "albumes"
+        permissions = [("publish_album", "Puede publicar y despublicar álbumes")]
 
     def __str__(self) -> str:
         return self.title

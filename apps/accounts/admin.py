@@ -1,11 +1,14 @@
+from django import forms
 from django.contrib import admin, messages
 from django.contrib.admin.sites import NotRegistered
 from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.forms import AdminUserCreationForm, UserChangeForm
 from django.contrib.auth.models import Group
 
 from apps.backoffice.utils import badge, count_message
 
 from .models import User
+from .roles import ROLE_NAMES, ROLES_BY_NAME, set_user_roles, user_role_names
 
 # Los grupos son una implementación interna de permisos. El administrador no necesita
 # editarlos manualmente y así evitamos que una modificación rompa la política de acceso.
@@ -15,13 +18,35 @@ except NotRegistered:
     pass
 
 
+class _PanelRolesMixin(forms.Form):
+    panel_roles = forms.MultipleChoiceField(
+        label="Roles del panel",
+        choices=[(name, name) for name in ROLE_NAMES],
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+        help_text=" · ".join(f"{name}: {ROLES_BY_NAME[name].description}" for name in ROLE_NAMES),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.pk:
+            self.fields["panel_roles"].initial = user_role_names(self.instance)
+
+
+class AdminUserChangeForm(_PanelRolesMixin, UserChangeForm):
+    pass
+
+
+class AdminUserAddForm(_PanelRolesMixin, AdminUserCreationForm):
+    pass
+
+
 @admin.register(User)
 class CustomUserAdmin(UserAdmin):
-    """Gestión simple de cuentas reservada al superusuario principal.
+    """Gestión de cuentas reservada al superusuario (la única cuenta que entra al admin).
 
-    Los usuarios creados desde aquí son siempre cuentas normales del BackOffice:
-    ``is_staff=True``, ``is_superuser=False`` y rol editorial. Los permisos reales del
-    contenido se asignan automáticamente mediante los grupos gestionados en ``roles.py``.
+    Los usuarios creados desde aquí son siempre cuentas normales del panel:
+    ``is_staff=True`` e ``is_superuser=False``. Su acceso lo dan los roles de ``roles.py``.
     """
 
     fieldsets = (
@@ -31,11 +56,12 @@ class CustomUserAdmin(UserAdmin):
             {"fields": ("first_name", "last_name", "email")},
         ),
         (
-            "Acceso al BackOffice",
+            "Acceso al panel",
             {
-                "fields": ("is_active",),
+                "fields": ("is_active", "panel_roles"),
                 "description": (
-                    "Una cuenta activa puede entrar al panel y gestionar el contenido del sitio."
+                    "Una cuenta activa entra al panel con los permisos de sus roles. "
+                    "Sin roles solo puede ver su propia cuenta."
                 ),
             },
         ),
@@ -57,13 +83,16 @@ class CustomUserAdmin(UserAdmin):
                     "last_name",
                     "email",
                     "is_active",
+                    "panel_roles",
                 ),
             },
         ),
     )
+    form = AdminUserChangeForm
+    add_form = AdminUserAddForm
     readonly_fields = ("last_login", "date_joined")
-    list_display = ("username", "full_name", "email", "active_badge", "last_login")
-    list_filter = ("is_active",)
+    list_display = ("username", "full_name", "email", "roles_label", "active_badge", "last_login")
+    list_filter = ("is_active", "groups")
     search_fields = ("username", "first_name", "last_name", "email")
     ordering = ("username",)
     actions = ("activate_users", "deactivate_users")
@@ -72,6 +101,10 @@ class CustomUserAdmin(UserAdmin):
     @admin.display(description="Nombre", ordering="first_name")
     def full_name(self, obj):
         return obj.get_full_name() or "—"
+
+    @admin.display(description="Roles")
+    def roles_label(self, obj):
+        return ", ".join(user_role_names(obj)) or "—"
 
     @admin.display(description="Estado", ordering="is_active")
     def active_badge(self, obj):
@@ -101,8 +134,8 @@ class CustomUserAdmin(UserAdmin):
         # Cualquier cuenta gestionada aquí es una cuenta normal de BackOffice.
         obj.is_staff = True
         obj.is_superuser = False
-        obj.role = User.Role.EDITOR
         super().save_model(request, obj, form, change)
+        set_user_roles(obj, form.cleaned_data.get("panel_roles", []))
 
     @admin.action(description="Activar cuentas seleccionadas", permissions=["change"])
     def activate_users(self, request, queryset) -> None:

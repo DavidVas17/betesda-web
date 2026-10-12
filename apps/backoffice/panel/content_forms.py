@@ -31,8 +31,15 @@ class PanelImageField(forms.ImageField):
 
 
 class PanelModelForm(forms.ModelForm):
-    def __init__(self, *args, readonly=False, **kwargs):
+    # Campos que deciden qué se ve en el sitio. Sin permiso de publicar se quitan del
+    # formulario: Django ignora lo que llegue en esos nombres y el elemento sigue en borrador.
+    publication_fields: tuple[str, ...] = ()
+
+    def __init__(self, *args, readonly=False, can_publish=True, **kwargs):
         super().__init__(*args, **kwargs)
+        if not can_publish:
+            for name in self.publication_fields:
+                self.fields.pop(name, None)
         for field in self.fields.values():
             field.widget.attrs.setdefault("class", "panel-input")
             if isinstance(field, forms.DateTimeField):
@@ -42,6 +49,7 @@ class PanelModelForm(forms.ModelForm):
 
 
 class EventForm(PanelModelForm):
+    publication_fields = ("is_published", "is_featured")
     cover_image = PanelImageField(label="Imagen de portada", required=False)
 
     class Meta:
@@ -83,6 +91,7 @@ class EventForm(PanelModelForm):
 
 
 class PostForm(PanelModelForm):
+    publication_fields = ("status", "published_at", "is_featured")
     cover_image = PanelImageField(label="Imagen de portada", required=False)
 
     class Meta:
@@ -121,6 +130,8 @@ class PostForm(PanelModelForm):
 
 
 class AlbumForm(PanelModelForm):
+    publication_fields = ("is_published",)
+
     class Meta:
         model = Album
         fields = ("title", "description", "event_date", "is_published")

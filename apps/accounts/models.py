@@ -1,15 +1,19 @@
 from django.contrib.auth.models import AbstractUser
-from django.db import models
 
 
 class User(AbstractUser):
-    class Role(models.TextChoices):
-        ADMIN = "ADMIN", "Administrador"
-        EDITOR = "EDITOR", "Editor de contenido"
-
-    role = models.CharField("rol", max_length=20, choices=Role.choices, default=Role.EDITOR)
+    """Cuenta del equipo. Los roles son grupos definidos en ``apps.accounts.roles``."""
 
     class Meta:
         verbose_name = "usuario"
         verbose_name_plural = "usuarios"
+        permissions = [
+            ("manage_team", "Puede gestionar las cuentas y roles del equipo"),
+            ("view_activity", "Puede ver la bitácora de actividad"),
+        ]
 
+    @property
+    def role_names(self) -> list[str]:
+        from .roles import user_role_names
+
+        return user_role_names(self)

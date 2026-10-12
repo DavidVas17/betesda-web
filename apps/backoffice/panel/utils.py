@@ -51,11 +51,11 @@ def panel_context(request, active="dashboard", title="Inicio", subtitle=""):
                     "badge": new_messages if route == "message_list" else 0,
                 }
             )
-    if user.is_superuser:
-        for label, route, icon in (
-            ("Usuarios", "user_list", "users"),
-            ("Actividad", "activity", "activity"),
-        ):
+    for label, route, icon, permission in (
+        ("Usuarios", "user_list", "users", "accounts.manage_team"),
+        ("Actividad", "activity", "activity", "accounts.view_activity"),
+    ):
+        if user.has_perm(permission):
             navigation.append(
                 {
                     "label": label,
