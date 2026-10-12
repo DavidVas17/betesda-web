@@ -16,6 +16,9 @@ from apps.accounts.roles import (
 from apps.contacts.models import ContactMessage
 from apps.core.models import SiteConfiguration
 
+from .content_forms import choice_label
+from .form_layout import FieldsetsMixin
+
 User = get_user_model()
 
 
@@ -70,7 +73,13 @@ class MessageFollowupForm(forms.ModelForm):
         self.fields["assigned_to"].empty_label = "Sin asignar"
 
 
-class SiteSettingsForm(forms.ModelForm):
+class SiteSettingsForm(FieldsetsMixin, forms.ModelForm):
+    fieldsets = (
+        ("Identidad", "Cómo se presenta la iglesia en el sitio.", ("institution_name", "slogan")),
+        ("Contacto", "Por dónde nos encuentra la comunidad.", ("phone", "email", "address")),
+        ("Enlaces", "Copia los enlaces completos desde el navegador.", ("facebook_url", "map_url")),
+    )
+
     class Meta:
         model = SiteConfiguration
         fields = (
@@ -110,7 +119,7 @@ class SiteSettingsForm(forms.ModelForm):
         return value
 
 
-class TeamRolesMixin:
+class TeamRolesMixin(FieldsetsMixin):
     """Casillas de roles para las cuentas del equipo, con las reglas de quién asigna qué.
 
     - Solo el superusuario asigna o quita roles privilegiados (Administración de la iglesia).
@@ -118,13 +127,29 @@ class TeamRolesMixin:
     - Ninguna cuenta creada o editada aquí es superusuario.
     """
 
+    fieldsets = (
+        (
+            "Datos de la persona",
+            "Cómo aparecerá en el panel.",
+            ("first_name", "last_name", "email"),
+        ),
+        (
+            "Acceso",
+            "El usuario es con lo que ingresa. Una cuenta inactiva no puede entrar.",
+            ("username", "password1", "password2", "is_active"),
+        ),
+        ("Roles", "Marca lo que esta persona va a manejar.", ("roles",)),
+    )
+
     def _setup_roles(self, actor):
         self.actor = actor
         self.editing_self = bool(self.instance.pk and actor and self.instance.pk == actor.pk)
         self.current_roles = user_role_names(self.instance) if self.instance.pk else []
         self.fields["roles"] = forms.MultipleChoiceField(
             label="Roles en el panel",
-            choices=[(role.name, f"{role.name}: {role.description}") for role in ROLES],
+            choices=[
+                (role.name, choice_label(role.name, role.description)) for role in ROLES
+            ],
             required=False,
             widget=forms.CheckboxSelectMultiple,
             initial=self.current_roles,

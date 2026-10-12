@@ -7,9 +7,10 @@
   <meta name="robots" content="noindex, nofollow">
   <title>{% block title %}{{ panel_title|default:'Panel de la iglesia' }}{% endblock %} · Betesda</title>
   {% include 'includes/favicons.html' %}
-  <link rel="stylesheet" href="{% static 'panel/css/panel.css' %}?v=carbon-20261011">
+  <link rel="stylesheet" href="{% static 'panel/css/panel.css' %}?v=forms-20261011">
   {% block extra_css %}{% endblock %}
   <script src="{% static 'panel/js/panel.js' %}?v=202610-panel" defer></script>
+  <script src="{% static 'js/forms.js' %}?v=forms-20261011" defer></script>
   {% block extra_js %}{% endblock %}
 </head>
 <body class="p-app">

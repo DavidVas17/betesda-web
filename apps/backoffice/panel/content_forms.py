@@ -1,11 +1,19 @@
 from django import forms
+from django.utils.html import format_html
 
 from apps.events.models import Event
 from apps.gallery.forms import MAX_FILE_MB
 from apps.gallery.models import Album, Photo
 from apps.news.models import Post
 
+from .form_layout import FieldsetsMixin
+
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M"
+
+
+def choice_label(title, description):
+    """Etiqueta de dos líneas para las opciones que se muestran como tarjetas."""
+    return format_html("<strong>{}</strong><span>{}</span>", title, description)
 
 
 class LocalDateTimeInput(forms.DateTimeInput):
@@ -30,7 +38,7 @@ class PanelImageField(forms.ImageField):
         return super().clean(data, initial)
 
 
-class PanelModelForm(forms.ModelForm):
+class PanelModelForm(FieldsetsMixin, forms.ModelForm):
     # Campos que deciden qué se ve en el sitio. Sin permiso de publicar se quitan del
     # formulario: Django ignora lo que llegue en esos nombres y el elemento sigue en borrador.
     publication_fields: tuple[str, ...] = ()
@@ -50,6 +58,17 @@ class PanelModelForm(forms.ModelForm):
 
 class EventForm(PanelModelForm):
     publication_fields = ("is_published", "is_featured")
+    fieldsets = (
+        ("Lo básico", "El nombre y una idea rápida de la actividad.", ("title", "summary")),
+        (
+            "Fecha y lugar",
+            "Cuándo y dónde nos reunimos. Usa la hora local de Guatemala.",
+            ("starts_at", "ends_at", "location"),
+        ),
+        ("Detalles", "Lo que la persona necesita saber para asistir.", ("description",)),
+        ("Imagen", "Una foto horizontal se ve mejor en las tarjetas.", ("cover_image",)),
+        ("Publicación", "Decide si ya se muestra en el sitio.", ("is_published", "is_featured")),
+    )
     cover_image = PanelImageField(label="Imagen de portada", required=False)
 
     class Meta:
@@ -85,13 +104,45 @@ class EventForm(PanelModelForm):
         widgets = {
             "description": forms.Textarea(attrs={"rows": 8}),
             "summary": forms.Textarea(attrs={"rows": 2}),
-            "starts_at": LocalDateTimeInput(),
-            "ends_at": LocalDateTimeInput(),
+            "starts_at": LocalDateTimeInput(attrs={"data-starts": ""}),
+            "ends_at": LocalDateTimeInput(attrs={"data-ends": ""}),
         }
 
 
 class PostForm(PanelModelForm):
     publication_fields = ("status", "published_at", "is_featured")
+    fieldsets = (
+        ("Lo básico", "Un título claro y un resumen para la tarjeta.", ("title", "excerpt")),
+        (
+            "Contenido",
+            "Escribe la noticia completa. Deja una línea en blanco entre párrafos.",
+            ("body",),
+        ),
+        ("Imagen", "Una foto horizontal se ve mejor en las tarjetas.", ("cover_image",)),
+        (
+            "Publicación",
+            "Elige cuándo y cómo se muestra en el sitio.",
+            ("status", "published_at", "is_featured"),
+        ),
+    )
+    STATUS_HELP = {
+        Post.Status.DRAFT: "Solo el equipo la ve.",
+        Post.Status.PUBLISHED: "Se muestra en el sitio.",
+        Post.Status.ARCHIVED: "Se retira del sitio y se conserva.",
+    }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        status = self.fields.get("status")
+        if status is not None:
+            status.widget = forms.RadioSelect(attrs={"class": "panel-input"})
+            status.choices = [
+                (value, choice_label(label, self.STATUS_HELP[value]))
+                for value, label in Post.Status.choices
+            ]
+            status.widget.choices = status.choices
+            if self.fields["status"].disabled:
+                status.widget.attrs["disabled"] = True
     cover_image = PanelImageField(label="Imagen de portada", required=False)
 
     class Meta:
@@ -131,6 +182,11 @@ class PostForm(PanelModelForm):
 
 class AlbumForm(PanelModelForm):
     publication_fields = ("is_published",)
+    fieldsets = (
+        ("Lo básico", "Cómo se llama el álbum y de cuándo son las fotos.", ("title", "event_date")),
+        ("Descripción", "Unas palabras sobre la actividad.", ("description",)),
+        ("Publicación", "Decide si ya se muestra en la galería.", ("is_published",)),
+    )
 
     class Meta:
         model = Album
@@ -152,6 +208,14 @@ class AlbumForm(PanelModelForm):
 
 class PhotoForm(PanelModelForm):
     image = PanelImageField(label="Fotografía")
+    fieldsets = (
+        ("Fotografía", "Puedes reemplazar la imagen si hace falta.", ("image",)),
+        (
+            "Descripción",
+            "Ayuda a quienes usan lectores de pantalla y da contexto a todos.",
+            ("alt_text", "caption", "order"),
+        ),
+    )
 
     class Meta:
         model = Photo
