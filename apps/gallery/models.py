@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.db import models
 
+from apps.core.images import ImageVariantsMixin
 from apps.core.models import TimeStampedModel
 from apps.core.utils import unique_slug
 
@@ -36,9 +37,17 @@ class Album(TimeStampedModel):
         super().save(*args, **kwargs)
 
 
-class Photo(TimeStampedModel):
+class Photo(ImageVariantsMixin, TimeStampedModel):
+    image_variants = {"image": (("thumb", 800), ("display", 1800))}
+
     album = models.ForeignKey(Album, on_delete=models.CASCADE, related_name="photos")
     image = models.ImageField("imagen", upload_to="gallery/%Y/%m/")
+    thumb = models.ImageField(
+        "miniatura", upload_to="gallery/%Y/%m/web/", blank=True, editable=False
+    )
+    display = models.ImageField(
+        "imagen para ver", upload_to="gallery/%Y/%m/web/", blank=True, editable=False
+    )
     alt_text = models.CharField("texto alternativo", max_length=180)
     caption = models.CharField("descripcion breve", max_length=255, blank=True)
     order = models.PositiveSmallIntegerField("orden", default=0)
@@ -51,3 +60,10 @@ class Photo(TimeStampedModel):
     def __str__(self) -> str:
         return f"{self.album}: {self.alt_text}"
 
+    @property
+    def thumb_url(self) -> str:
+        return self.best_url(self.thumb, self.image)
+
+    @property
+    def display_url(self) -> str:
+        return self.best_url(self.display, self.image)

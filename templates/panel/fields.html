@@ -1,6 +1,6 @@
 {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
 {% if form.errors %}<div class="fk-summary p-form-errors" role="alert"><strong>{% if form.errors|length == 1 %}Falta revisar un dato:{% else %}Faltan revisar {{ form.errors|length }} datos:{% endif %}</strong><ul>{% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}{% for field in form.visible_fields %}{% for error in field.errors %}<li><a href="#{{ field.id_for_label }}">{{ field.label }}: {{ error }}</a></li>{% endfor %}{% endfor %}</ul></div>{% endif %}
-{% with wide_fields=' title summary excerpt institution_name slogan location cover_image image description body internal_notes address message mission vision alt_text roles status images caption ' %}
+{% with wide_fields=' title summary excerpt institution_name slogan location cover_image image description body internal_notes address message mission vision purpose history alt_text roles status images caption ' %}
 {% with groups=form.fieldset_groups %}
 {% if groups %}
   {% for group in groups %}

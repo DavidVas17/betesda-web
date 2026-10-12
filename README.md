@@ -31,7 +31,9 @@ docker compose up --build -d
 docker compose exec web python manage.py bootstrap_admin
 ```
 
-Antes del último comando, cambie `DJANGO_SUPERUSER_PASSWORD` dentro de `.env`. Luego abra:
+Antes del último comando, cambie `DJANGO_SUPERUSER_PASSWORD` dentro de `.env`.
+
+> El archivo `.env` no se guarda en Git. Si ya tenías el proyecto y al actualizar desaparece, vuelve a crearlo con `cp .env.example .env` y tus valores. Luego abra:
 
 - Sitio: <http://localhost:8000>
 - BackOffice: <http://localhost:8000/panel/>

@@ -1,38 +1,8 @@
 {% extends "admin/base.html" %}
-{% load static %}
-
-{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | {{ site_title|default:"Panel Betesda" }}{% endblock %}
-
-{% block extrastyle %}{{ block.super }}
-<link rel="stylesheet" href="{% static 'backoffice/css/admin.css' %}?v=brand-20261010">
-{% endblock %}
-
-{% block extrahead %}{{ block.super }}
-{% include 'includes/favicons.html' %}
-<script src="{% static 'backoffice/js/admin.js' %}" defer></script>
-{% endblock %}
-
-{% block branding %}
-<div id="site-name">
-  <a class="bo-brand" href="{% url 'admin:index' %}">
-    <img class="bo-brand__mark" src="{% static 'images/logo-betesda.png' %}" width="76" height="48" alt="Logo de Betesda Rosa de Sarón">
-    <span class="bo-brand__copy">
-      <strong>Betesda Rosa de Sarón</strong>
-      <small>BackOffice</small>
-    </span>
-  </a>
-</div>
-{% endblock %}
-
-{% block userlinks %}
-  <a href="{% url 'panel:dashboard' %}">Panel de la iglesia</a> /
-  {% if bo_new_messages %}
-    <a class="bo-bell" href="{% url 'admin:contacts_contactmessage_changelist' %}?status__exact=NEW"
-       title="Mensajes de contacto sin atender">
-      <span aria-hidden="true">●</span> {{ bo_new_messages }} nuevo{{ bo_new_messages|pluralize }}
-    </a>
-  {% endif %}
-  {{ block.super }}
-{% endblock %}
-
-{% block nav-global %}{% endblock %}
+{% comment %}
+  Administración técnica: el admin estándar de Django, sin tema propio. Es solo para el
+  superusuario; el equipo trabaja en el panel (/panel/).
+{% endcomment %}
+{% block extrahead %}{{ block.super }}{% include 'includes/favicons.html' %}{% endblock %}
+{% block branding %}<div id="site-name"><a href="{% url 'admin:index' %}">{{ site_header }}</a></div>{% endblock %}
+{% block userlinks %}<a href="{% url 'panel:dashboard' %}">Ir al panel de la iglesia</a> / {{ block.super }}{% endblock %}

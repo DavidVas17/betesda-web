@@ -10,7 +10,20 @@
 - mensajes de error sin detalles tecnicos en producción;
 - comprobaciones de disponibilidad separadas;
 - secretos exclusivamente mediante variables de entorno;
-- deteccion de llaves privadas antes del commit.
+- deteccion de llaves privadas antes del commit;
+- `.env` excluido de Git: cada ambiente crea el suyo desde `.env.example`;
+- administración técnica (`DJANGO_ADMIN_URL`) solo para el superusuario;
+- límite de mensajes por visitante en el formulario público (`CONTACT_RATE_LIMIT_*`);
+- IP real del visitante detrás de Caddy (`DJANGO_TRUST_X_FORWARDED_FOR`).
+
+## Si un secreto llegó a Git
+
+Borrar el archivo del repositorio no basta: queda en el historial. Hay que cambiar el secreto.
+
+1. Generar una `DJANGO_SECRET_KEY` nueva y reemplazarla en el `.env` del servidor.
+2. Cambiar la contraseña del superusuario (`make admin` con el nuevo valor en `.env`).
+3. Cambiar `POSTGRES_PASSWORD` y `DATABASE_URL` si el archivo expuesto los tenía.
+4. Reiniciar los servicios y cerrar sesiones abiertas.
 
 ## Reglas de administración
 

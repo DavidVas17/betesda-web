@@ -12,7 +12,6 @@ from django.utils import timezone
 from PIL import Image
 
 from apps.accounts.roles import CHURCH_ADMIN, COORDINATOR, set_user_roles
-from apps.backoffice.dashboard import _weekly_message_counts
 from apps.contacts.models import ContactMessage
 from apps.core.models import SiteConfiguration
 from apps.events.models import Event
@@ -60,56 +59,23 @@ def editor(db):
 
 @pytest.fixture
 def role_admin(db):
-    user = User.objects.create_user(
-        username="coordinadora", password="x-test-pass", is_staff=True
-    )
+    user = User.objects.create_user(username="coordinadora", password="x-test-pass", is_staff=True)
     set_user_roles(user, [CHURCH_ADMIN.name])
     return user
 
 
-# --- Tablero --------------------------------------------------------------------------
+# --- Administración técnica -------------------------------------------------------------
 
 
 @pytest.mark.django_db
-def test_dashboard_renders_for_superuser(admin_client):
+def test_technical_admin_is_the_standard_django_index(admin_client):
     response = admin_client.get(reverse("admin:index"))
 
-    assert response.status_code == 200
     content = response.content.decode()
-    assert "Hola," in content
-    assert "Gestión del sitio" in content
-    assert "Todas las secciones" not in content
-    assert "admin/app_list.html" not in content
-
-
-@pytest.mark.django_db
-def test_dashboard_shows_new_messages_and_bell(admin_client):
-    make_message()
-
-    content = admin_client.get(reverse("admin:index")).content.decode()
-
-    assert "Mensajes nuevos" in content
-    assert "1 nuevo" in content
-    assert "Horarios de servicio" in content
-
-
-@pytest.mark.django_db
-def test_dashboard_warns_when_there_are_no_upcoming_events(admin_client):
-    content = admin_client.get(reverse("admin:index")).content.decode()
-
-    assert "No hay eventos próximos publicados" in content
-    assert "Falta la configuración general del sitio" in content
-
-
-@pytest.mark.django_db
-def test_weekly_message_counts_has_eight_buckets_and_counts_current_week():
-    make_message()
-
-    buckets = _weekly_message_counts(timezone.now())
-
-    assert len(buckets) == 8
-    assert buckets[-1]["count"] == 1
-    assert all(bucket["count"] == 0 for bucket in buckets[:-1])
+    assert response.status_code == 200
+    assert "Mantenimiento del sitio" in content
+    assert "Ir al panel de la iglesia" in content
+    assert "admin.css" not in content
 
 
 @pytest.mark.django_db

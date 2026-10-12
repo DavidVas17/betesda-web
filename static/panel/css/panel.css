@@ -669,3 +669,15 @@ button[aria-busy='true'] { cursor: progress; opacity: .85; }
 .p-choice-group label { align-content: start; }
 .fk-counter-row[hidden] { display: none; }
 .fk-summary { scroll-margin-top: 24px; }
+
+/* Nuestra iglesia: ministerios y valores */
+.p-institution-card + .p-institution-card { margin-top: 24px; }
+.p-institution-list { margin: 0; padding: 0; list-style: none; }
+.p-institution-list li + li { border-top: 1px solid var(--p-line); }
+.p-institution-list a { display: flex; align-items: center; gap: 16px; padding: 16px 24px; color: var(--p-text); transition: background .15s; }
+.p-institution-list a:hover { background: #faf9f6; }
+.p-institution-order { display: inline-grid; place-items: center; flex: 0 0 36px; height: 36px; border-radius: 10px; color: var(--p-gold); background: var(--p-gold-soft); font-size: .78rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.p-institution-copy { flex: 1; min-width: 0; }
+.p-institution-copy strong { display: block; font-size: .9rem; }
+.p-institution-copy span { display: block; margin-top: 3px; color: var(--p-muted); font-size: .8rem; }
+.p-institution-list .p-icon { width: 16px; height: 16px; color: #a8a49b; }

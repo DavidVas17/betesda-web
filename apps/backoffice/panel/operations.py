@@ -64,7 +64,18 @@ def settings(request):
         "institution_name": INSTITUTION["name"],
         **{
             key: INSTITUTION[key]
-            for key in ("slogan", "phone", "email", "address", "facebook_url", "map_url")
+            for key in (
+                "slogan",
+                "phone",
+                "email",
+                "address",
+                "facebook_url",
+                "map_url",
+                "mission",
+                "vision",
+                "purpose",
+                "history",
+            )
         },
     }
     if request.method == "POST" and not can_save:
@@ -192,8 +203,7 @@ def _team_form(request, pk=None):
             "form": form,
             "form_title": "Editar cuenta" if user else "Agregar persona al equipo",
             "form_intro": (
-                "Elige los roles según lo que esta persona va a manejar. "
-                "Puedes combinar varios."
+                "Elige los roles según lo que esta persona va a manejar. Puedes combinar varios."
             ),
             "cancel_url": reverse("panel:user_list"),
             "submit_label": "Guardar cuenta",

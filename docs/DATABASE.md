@@ -7,10 +7,11 @@ PostgreSQL conserva su información en el volumen `postgres_data`. `docker compo
 ## Respaldo
 
 ```bash
-make backup
+make backup        # base de datos
+make backup-media  # fotos e imágenes subidas (no están en la base de datos)
 ```
 
-El comando genera un archivo comprimido en `backups/`. Esa carpeta no debe confirmarse en Git. Copie los respaldos de producción a una ubicación cifrada y separada del servidor.
+Los comandos generan archivos fechados en `backups/`. Un respaldo completo son los dos archivos. Esa carpeta no debe confirmarse en Git. Copie los respaldos de producción a una ubicación cifrada y separada del servidor.
 
 ## Restauracion controlada
 
@@ -21,7 +22,14 @@ El comando genera un archivo comprimido en `backups/`. Esa carpeta no debe confi
 5. Ejecutar pruebas de integridad y flujos principales.
 6. Documentar fecha, responsable y resultado.
 
-La restauración es una operación destructiva y no se automatiza en el `Makefile` para evitar ejecuciones accidentales.
+Después de verificar en una base temporal, la restauración en el ambiente real se hace con:
+
+```bash
+make restore FILE=backups/betesda-AAAAMMDD-HHMMSS.dump CONFIRMAR=si
+make restore-media FILE=backups/media-AAAAMMDD-HHMMSS.tar.gz CONFIRMAR=si
+```
+
+Son operaciones destructivas: sin `CONFIRMAR=si` el comando se detiene y no toca nada.
 
 ## Politica sugerida de producción
 

@@ -43,6 +43,8 @@ CHURCH_ADMIN = Role(
         "contacts.contactmessage": ("view", "change", "delete", "export"),
         # Existe una sola configuración y su vista impide eliminarla.
         "core.siteconfiguration": ("add", "change", "view"),
+        "core.ministry": _FULL,
+        "core.churchvalue": _FULL,
         "accounts.user": ("manage_team", "view_activity"),
     },
 )
@@ -118,9 +120,7 @@ def _permission_query(spec: dict[str, tuple[str, ...]]) -> Q:
     for label, actions in spec.items():
         app_label, model_name = label.split(".")
         for action in actions:
-            query |= Q(
-                content_type__app_label=app_label, codename=_codename(action, model_name)
-            )
+            query |= Q(content_type__app_label=app_label, codename=_codename(action, model_name))
     return query
 
 

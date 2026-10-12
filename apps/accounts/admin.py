@@ -1,3 +1,5 @@
+import contextlib
+
 from django import forms
 from django.contrib import admin, messages
 from django.contrib.admin.sites import NotRegistered
@@ -12,10 +14,8 @@ from .roles import ROLE_NAMES, ROLES_BY_NAME, set_user_roles, user_role_names
 
 # Los grupos son una implementación interna de permisos. El administrador no necesita
 # editarlos manualmente y así evitamos que una modificación rompa la política de acceso.
-try:
+with contextlib.suppress(NotRegistered):
     admin.site.unregister(Group)
-except NotRegistered:
-    pass
 
 
 class _PanelRolesMixin(forms.Form):

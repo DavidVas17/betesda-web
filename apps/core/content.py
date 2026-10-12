@@ -1,4 +1,9 @@
-"""Información institucional proporcionada en el documento del proyecto, páginas 2–5."""
+"""Valores por defecto de la información institucional (documento del proyecto, págs. 2–5).
+
+Se usan mientras la configuración del sitio no tenga su propio texto. Los ministerios y los
+valores viven en la base de datos (modelos ``Ministry`` y ``ChurchValue``) y se editan
+desde el panel.
+"""
 
 INSTITUTION = {
     "name": "Ministerios Pentecostés Betesda Rosa de Sarón",
@@ -34,83 +39,3 @@ INSTITUTION = {
         "y servicio comunitario."
     ),
 }
-
-VALUES = [
-    ("Fe", "Confiamos en Dios y en Su Palabra, viviendo cada día conforme a la fe en Jesucristo."),
-    ("Amor", "Amamos a Dios y al prójimo con compasión y disposición para servir."),
-    ("Unidad", "Promovemos la armonía, el respeto, la reconciliación y el apoyo mutuo."),
-    ("Servicio", "Ponemos nuestros dones, tiempo y capacidades al servicio de los demás."),
-    ("Evangelismo", "Compartimos el mensaje de Jesucristo, llevando esperanza a la comunidad."),
-    ("Trabajo en equipo", "Reconocemos el valor y los dones de cada persona."),
-    ("Familia", "Fortalecemos los hogares con amor, respeto y perdón."),
-    ("Compromiso", "Servimos con responsabilidad, perseverancia, disposición y excelencia."),
-    ("Compasión", "Atendemos con sensibilidad y generosidad las necesidades de las personas."),
-    ("Integridad", "Buscamos coherencia entre nuestras palabras, decisiones y acciones."),
-]
-
-MINISTRIES = [
-    {
-        "name": "Ministerio Infantil",
-        "tag": "Niños",
-        "slug": "infantil",
-        "icon": "baby",
-        "description": (
-            "Enseñanza de la Palabra de Dios de manera comprensible, dinámica y amorosa."
-        ),
-    },
-    {
-        "name": "Ministerio de Jóvenes",
-        "tag": "Jóvenes",
-        "slug": "jovenes",
-        "icon": "sparkles",
-        "description": (
-            "Acompañamiento, discipulado y capacitación para que los jóvenes desarrollen sus dones."
-        ),
-    },
-    {
-        "name": "Ministerio de Adultos",
-        "tag": "Adultos",
-        "slug": "adultos",
-        "icon": "users",
-        "description": (
-            "Fortalecimiento de la vida espiritual, familiar y comunitaria, "
-            "promoviendo el compañerismo y el servicio."
-        ),
-    },
-    {
-        "name": "Ministerio de Adultos Mayores",
-        "tag": "Adultos mayores",
-        "slug": "adultos-mayores",
-        "icon": "hand-heart",
-        "description": "Acompañamiento, respeto, cuidado y oportunidades de participación.",
-    },
-    {
-        "name": "Evangelismo y Misiones",
-        "tag": "Compartir la fe",
-        "slug": "evangelismo",
-        "icon": "globe",
-        "description": (
-            "Acercamiento a las personas e iniciativas que llevan el mensaje de Cristo "
-            "a la comunidad y más allá."
-        ),
-    },
-    {
-        "name": "Acción Social y Servicio Comunitario",
-        "tag": "Servir",
-        "slug": "accion-social",
-        "icon": "helping",
-        "description": (
-            "Identificación y atención organizada de las necesidades de nuestro entorno."
-        ),
-    },
-    {
-        "name": "Discipulado y Formación",
-        "tag": "Crecer",
-        "slug": "discipulado",
-        "icon": "book",
-        "description": (
-            "Capacitación de los creyentes en la Palabra de Dios, "
-            "liderazgo, servicio y vida cristiana."
-        ),
-    },
-]

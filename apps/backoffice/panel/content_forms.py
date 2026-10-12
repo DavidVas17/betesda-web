@@ -143,6 +143,7 @@ class PostForm(PanelModelForm):
             status.widget.choices = status.choices
             if self.fields["status"].disabled:
                 status.widget.attrs["disabled"] = True
+
     cover_image = PanelImageField(label="Imagen de portada", required=False)
 
     class Meta:

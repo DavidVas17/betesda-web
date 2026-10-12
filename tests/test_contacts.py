@@ -190,13 +190,9 @@ def test_submitted_message_appears_in_backoffice(client, admin_client, contact_d
     client.post(reverse("contacts:send"), contact_data)
     message = ContactMessage.objects.get()
 
-    response = admin_client.get(reverse("admin:index"))
+    response = admin_client.get(reverse("panel:dashboard"))
 
-    assert response.context["bo_new_messages"] == 1
-    message_kpi = next(
-        item for item in response.context["dashboard"]["kpis"] if item["label"] == "Mensajes nuevos"
-    )
-    assert message_kpi["value"] == 1
+    assert response.context["panel_new_messages"] == 1
     assert message.subject in response.content.decode()
 
     response = admin_client.get(

@@ -100,9 +100,7 @@ def test_every_role_permission_exists():
     """Un permiso mal escrito en roles.py se quedaría en silencio sin efecto."""
     existing = {
         f"{app}.{codename}"
-        for app, codename in Permission.objects.values_list(
-            "content_type__app_label", "codename"
-        )
+        for app, codename in Permission.objects.values_list("content_type__app_label", "codename")
     }
     for role in ROLES:
         missing = role_permission_codenames(role) - existing
@@ -175,6 +173,7 @@ MATRIX = {
     "message_export": (OK, NO, NO, NO, NO, NO),
     "message_delete": (OK, NO, NO, NO, NO, NO),
     "settings": (OK, NO, NO, NO, NO, NO),
+    "institution": (OK, NO, NO, NO, NO, NO),
     "user_list": (OK, NO, NO, NO, NO, NO),
     "activity": (OK, NO, NO, NO, NO, NO),
     "account": (OK, OK, OK, OK, OK, OK),

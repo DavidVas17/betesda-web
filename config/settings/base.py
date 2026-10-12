@@ -147,3 +147,11 @@ LOGGING = {
         "level": env("DJANGO_LOG_LEVEL"),
     },
 }
+
+# Formulario público: máximo de mensajes por IP dentro de la ventana (en segundos).
+CONTACT_RATE_LIMIT = (
+    env.int("CONTACT_RATE_LIMIT_COUNT", default=5),
+    env.int("CONTACT_RATE_LIMIT_SECONDS", default=600),
+)
+# Detrás de un proxy propio (Caddy en producción) la IP del visitante llega en X-Forwarded-For.
+TRUST_X_FORWARDED_FOR = env.bool("DJANGO_TRUST_X_FORWARDED_FOR", default=False)

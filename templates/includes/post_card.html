@@ -1,5 +1,5 @@
 <article class="content-card">
-  {% if post.cover_image %}<a class="content-card-image" href="{{ post.get_absolute_url }}" tabindex="-1" aria-hidden="true"><img src="{{ post.cover_image.url }}" alt="" loading="lazy" width="640" height="400"></a>{% endif %}
+  {% if post.cover_image %}<a class="content-card-image" href="{{ post.get_absolute_url }}" tabindex="-1" aria-hidden="true"><img src="{{ post.card_image_url }}" alt="" loading="lazy" width="640" height="400"></a>{% endif %}
   <div class="content-card-body">
     <p class="card-kicker">{% include 'includes/icon.html' with name='news' %}Noticias y anuncios · {{ post.published_at|date:'d M Y' }}</p>
     <h3><a href="{{ post.get_absolute_url }}">{{ post.title }}</a></h3>

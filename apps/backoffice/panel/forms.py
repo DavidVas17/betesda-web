@@ -78,6 +78,11 @@ class SiteSettingsForm(FieldsetsMixin, forms.ModelForm):
         ("Identidad", "Cómo se presenta la iglesia en el sitio.", ("institution_name", "slogan")),
         ("Contacto", "Por dónde nos encuentra la comunidad.", ("phone", "email", "address")),
         ("Enlaces", "Copia los enlaces completos desde el navegador.", ("facebook_url", "map_url")),
+        (
+            "Quiénes somos",
+            "Estos textos aparecen en Inicio y en Nosotros.",
+            ("mission", "vision", "purpose", "history"),
+        ),
     )
 
     class Meta:
@@ -90,6 +95,10 @@ class SiteSettingsForm(FieldsetsMixin, forms.ModelForm):
             "address",
             "facebook_url",
             "map_url",
+            "mission",
+            "vision",
+            "purpose",
+            "history",
         )
         labels = {
             "institution_name": "Nombre de la iglesia",
@@ -99,12 +108,22 @@ class SiteSettingsForm(FieldsetsMixin, forms.ModelForm):
             "address": "Dirección",
             "facebook_url": "Página de Facebook",
             "map_url": "Enlace de Google Maps",
+            "mission": "Misión",
+            "vision": "Visión",
+            "purpose": "Propósito",
+            "history": "Historia",
         }
         help_texts = {
             "email": "Opcional. Se mostrará en la página de Contacto cuando lo completes.",
             "map_url": "Pega el enlace para compartir la ubicación de la iglesia.",
         }
-        widgets = {"address": forms.Textarea(attrs={"rows": 2})}
+        widgets = {
+            "address": forms.Textarea(attrs={"rows": 2}),
+            "mission": forms.Textarea(attrs={"rows": 4}),
+            "vision": forms.Textarea(attrs={"rows": 4}),
+            "purpose": forms.Textarea(attrs={"rows": 4}),
+            "history": forms.Textarea(attrs={"rows": 6}),
+        }
 
     def clean_facebook_url(self):
         return self._secure_link("facebook_url")
@@ -147,9 +166,7 @@ class TeamRolesMixin(FieldsetsMixin):
         self.current_roles = user_role_names(self.instance) if self.instance.pk else []
         self.fields["roles"] = forms.MultipleChoiceField(
             label="Roles en el panel",
-            choices=[
-                (role.name, choice_label(role.name, role.description)) for role in ROLES
-            ],
+            choices=[(role.name, choice_label(role.name, role.description)) for role in ROLES],
             required=False,
             widget=forms.CheckboxSelectMultiple,
             initial=self.current_roles,

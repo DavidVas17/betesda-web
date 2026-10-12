@@ -7,8 +7,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from apps.contacts.models import ContactMessage
-from apps.core.content import MINISTRIES, VALUES
-from apps.core.models import SiteConfiguration
+from apps.core.models import ChurchValue, Ministry, SiteConfiguration
 from apps.events.models import Event
 from apps.gallery.models import Album, Photo
 from apps.news.models import Post
@@ -102,11 +101,29 @@ def test_institutional_pages_use_provided_information(client):
     content = client.get(reverse("core:about")).content.decode()
     for heading in ("Misión", "Visión", "Propósito", "2006"):
         assert heading in content
-    for name, _ in VALUES:
-        assert name in content
+    values = ChurchValue.objects.filter(is_active=True)
+    assert values.count() == 10
+    for value in values:
+        assert value.name in content
     content = client.get(reverse("core:ministries")).content.decode()
-    for ministry in MINISTRIES:
-        assert ministry["name"] in content
+    ministries = Ministry.objects.filter(is_active=True)
+    assert ministries.count() == 7
+    for ministry in ministries:
+        assert ministry.name in content
+
+
+def test_hidden_ministries_and_values_leave_the_public_site(client):
+    Ministry.objects.filter(slug="jovenes").update(is_active=False)
+    ChurchValue.objects.filter(name="Fe").update(is_active=False)
+
+    assert "Ministerio de Jóvenes" not in client.get(reverse("core:ministries")).content.decode()
+    assert "<h3>Fe</h3>" not in client.get(reverse("core:about")).content.decode()
+
+
+def test_edited_mission_replaces_the_default_text(client):
+    SiteConfiguration.objects.create(institution_name="Betesda", mission="Nueva misión de prueba")
+
+    assert "Nueva misión de prueba" in client.get(reverse("core:home")).content.decode()
 
 
 def test_contact_details_follow_backoffice_configuration(client):

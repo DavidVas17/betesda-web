@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import auth, content, dashboard, messages, operations
+from . import auth, content, dashboard, institution, messages, operations
 
 app_name = "panel"
 
@@ -34,6 +34,14 @@ urlpatterns = [
     path("mensajes/<int:pk>/accion/", messages.message_action, name="message_action"),
     path("mensajes/<int:pk>/eliminar/", messages.message_delete, name="message_delete"),
     path("configuracion/", operations.settings, name="settings"),
+    path("nuestra-iglesia/", institution.overview, name="institution"),
+    path("nuestra-iglesia/<slug:kind>/nuevo/", institution.create, name="institution_create"),
+    path("nuestra-iglesia/<slug:kind>/<int:pk>/", institution.edit, name="institution_edit"),
+    path(
+        "nuestra-iglesia/<slug:kind>/<int:pk>/eliminar/",
+        institution.delete,
+        name="institution_delete",
+    ),
     path("usuarios/", operations.user_list, name="user_list"),
     path("usuarios/nuevo/", operations.user_create, name="user_create"),
     path("usuarios/<int:pk>/editar/", operations.user_edit, name="user_edit"),

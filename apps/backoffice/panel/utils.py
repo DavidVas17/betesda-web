@@ -22,6 +22,7 @@ def panel_context(request, active="dashboard", title="Inicio", subtitle=""):
         ("Noticias", "news_list", "news", "news.view_post"),
         ("Galería", "album_list", "image", "gallery.view_album"),
         ("Mensajes", "message_list", "inbox", "contacts.view_contactmessage"),
+        ("Nuestra iglesia", "institution", "church", "core.view_ministry"),
         ("Configuración", "settings", "settings", "core.view_siteconfiguration"),
     ]
     navigation = []
@@ -31,6 +32,7 @@ def panel_context(request, active="dashboard", title="Inicio", subtitle=""):
         "album_list": "gallery",
         "message_list": "messages",
         "settings": "settings",
+        "institution": "institution",
         "dashboard": "dashboard",
     }
     for label, route, icon, permission in sections:

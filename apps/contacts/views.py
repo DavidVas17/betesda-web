@@ -6,6 +6,12 @@ from django.views.decorators.http import require_http_methods, require_POST
 from .forms import ContactMessageForm
 from .models import ContactMessage
 from .modes import CONTACT_MODES
+from .protection import client_ip, too_many_recent_messages
+
+RATE_LIMIT_MESSAGE = (
+    "Recibimos varios mensajes desde tu conexión en poco tiempo. "
+    "Espera unos minutos e inténtalo de nuevo, o llámanos por teléfono."
+)
 
 
 def _contact(request):
@@ -15,9 +21,14 @@ def _contact(request):
         else ContactMessage.Kind.PRAYER
     )
     form = ContactMessageForm(request.POST if request.method == "POST" else None, kind=kind)
-    if request.method == "POST" and form.is_valid():
+    status = 200
+    ip = client_ip(request) if request.method == "POST" else None
+    if request.method == "POST" and form.is_valid() and too_many_recent_messages(ip):
+        form.add_error(None, RATE_LIMIT_MESSAGE)
+        status = 429
+    elif request.method == "POST" and form.is_valid():
         message = form.save(commit=False)
-        message.source_ip = request.META.get("REMOTE_ADDR") or None
+        message.source_ip = ip
         message.save()
         mode = CONTACT_MODES[message.kind]
         messages.success(request, mode["success"], extra_tags="contact")
@@ -35,6 +46,7 @@ def _contact(request):
                 for kind, mode in CONTACT_MODES.items()
             },
         },
+        status=status,
     )
 
 

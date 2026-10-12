@@ -29,6 +29,7 @@ mano.
 | Exportar mensajes a CSV | Sí | No | No | No | No | No |
 | Eliminar mensajes | Sí | No | No | No | No | No |
 | Configuración del sitio | Sí | No | No | No | No | No |
+| Nuestra iglesia: ministerios y valores | Sí | No | No | No | No | No |
 | Gestionar usuarios y sus roles | Sí (ver reglas) | No | No | No | No | No |
 | Ver la bitácora de actividad | Sí | No | No | No | No | No |
 
