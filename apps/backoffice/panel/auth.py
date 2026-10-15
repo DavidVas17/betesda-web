@@ -1,15 +1,22 @@
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import logout, update_session_auth_hash
+from django.contrib.auth import views as auth_views
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.views import LoginView
 from django.shortcuts import redirect
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods, require_POST
 
 from .access import panel_required
-from .forms import PanelAuthenticationForm, ProfileForm
+from .forms import (
+    PanelAuthenticationForm,
+    PanelPasswordResetForm,
+    PanelSetPasswordForm,
+    ProfileForm,
+)
 from .utils import audit, panel_render
 
 
@@ -21,6 +28,46 @@ class PanelLoginView(LoginView):
 
     def get_default_redirect_url(self):
         return reverse("panel:dashboard")
+
+
+def _timeout_hours() -> int:
+    return max(1, settings.PASSWORD_RESET_TIMEOUT // 3600)
+
+
+class PanelPasswordResetView(auth_views.PasswordResetView):
+    """Paso 1: pedir el enlace. La respuesta es la misma exista o no la cuenta."""
+
+    form_class = PanelPasswordResetForm
+    template_name = "panel/password_reset.html"
+    subject_template_name = "panel/email/password_reset_subject.txt"
+    email_template_name = "panel/email/password_reset_body.txt"
+    success_url = reverse_lazy("panel:password_reset_done")
+    extra_email_context = {"timeout_hours": _timeout_hours()}
+
+    def get_form_kwargs(self):
+        return {**super().get_form_kwargs(), "request": self.request}
+
+
+class PanelPasswordResetDoneView(auth_views.PasswordResetDoneView):
+    template_name = "panel/password_reset_done.html"
+    extra_context = {"timeout_hours": _timeout_hours(), "icon": "inbox"}
+
+
+class PanelPasswordResetConfirmView(auth_views.PasswordResetConfirmView):
+    """Paso 2: elegir la contraseña nueva desde el enlace del correo."""
+
+    form_class = PanelSetPasswordForm
+    template_name = "panel/password_reset_confirm.html"
+    success_url = reverse_lazy("panel:login")
+    post_reset_login = False
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        audit(self.request, form.user, message="Restablecer contraseña por correo", actor=form.user)
+        messages.success(
+            self.request, "Tu contraseña cambió. Ya puedes ingresar con la nueva contraseña."
+        )
+        return response
 
 
 @never_cache

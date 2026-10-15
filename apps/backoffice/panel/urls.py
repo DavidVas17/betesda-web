@@ -8,6 +8,17 @@ urlpatterns = [
     path("", dashboard.dashboard, name="dashboard"),
     path("ingresar/", auth.PanelLoginView.as_view(), name="login"),
     path("salir/", auth.logout_view, name="logout"),
+    path("recuperar/", auth.PanelPasswordResetView.as_view(), name="password_reset"),
+    path(
+        "recuperar/enviado/",
+        auth.PanelPasswordResetDoneView.as_view(),
+        name="password_reset_done",
+    ),
+    path(
+        "recuperar/<uidb64>/<token>/",
+        auth.PanelPasswordResetConfirmView.as_view(),
+        name="password_reset_confirm",
+    ),
     path("eventos/", content.event_list, name="event_list"),
     path("eventos/nuevo/", content.event_create, name="event_create"),
     path("eventos/<int:pk>/editar/", content.event_edit, name="event_edit"),

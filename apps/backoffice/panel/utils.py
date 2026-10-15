@@ -96,11 +96,14 @@ def pagination_query(request):
     return parameters.urlencode()
 
 
-def audit(request, obj, flag=CHANGE, message="Actualización desde el panel"):
-    """Registra la operación sin contraseñas ni el cuerpo de solicitudes privadas."""
+def audit(request, obj, flag=CHANGE, message="Actualización desde el panel", actor=None):
+    """Registra la operación sin contraseñas ni el cuerpo de solicitudes privadas.
+
+    ``actor`` sirve cuando no hay sesión iniciada (por ejemplo, al restablecer la contraseña).
+    """
     description = f"Solicitud #{obj.pk}" if isinstance(obj, ContactMessage) else str(obj)
     return LogEntry.objects.create(
-        user_id=request.user.pk,
+        user_id=(actor or request.user).pk,
         content_type=ContentType.objects.get_for_model(obj, for_concrete_model=False),
         object_id=str(obj.pk),
         object_repr=description[:200],

@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 
-.PHONY: help setup up down logs shell migrate migrations test lint format check admin roles images backup backup-media restore restore-media prod-up
+.PHONY: help setup up down logs shell migrate migrations test lint format check admin roles images purge backup backup-media restore restore-media prod-up
 
 help:
 	@awk 'BEGIN {FS = ":.*##"; printf "\nComandos disponibles:\n"} /^[a-zA-Z_-]+:.*?##/ {printf "  %-16s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -74,6 +74,9 @@ restore-media: ## Restaura las imágenes: make restore-media FILE=backups/media-
 
 images: ## Crea las versiones WebP que falten de las imágenes subidas
 	docker compose exec web python manage.py generate_image_variants
+
+purge: ## Elimina mensajes vencidos (prueba primero: make purge ARGS=--dry-run)
+	docker compose exec web python manage.py purge_old_messages $(ARGS)
 
 prod-up: ## Inicia la configuracion de produccion
 	docker compose -f compose.prod.yaml up --build -d

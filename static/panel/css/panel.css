@@ -681,3 +681,7 @@ button[aria-busy='true'] { cursor: progress; opacity: .85; }
 .p-institution-copy strong { display: block; font-size: .9rem; }
 .p-institution-copy span { display: block; margin-top: 3px; color: var(--p-muted); font-size: .8rem; }
 .p-institution-list .p-icon { width: 16px; height: 16px; color: #a8a49b; }
+.p-retention-note { display: flex; align-items: center; gap: .4rem; margin-top: .5rem !important; }
+.p-retention-note .p-icon { width: .9rem; height: .9rem; flex: none; }
+.p-login-forgot { margin: 16px 0 0; text-align: center; font-size: .85rem; }
+.p-login-forgot a { color: var(--p-text); font-weight: 600; text-underline-offset: 3px; }

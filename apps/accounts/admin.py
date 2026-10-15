@@ -9,7 +9,7 @@ from django.contrib.auth.models import Group
 
 from apps.backoffice.utils import badge, count_message
 
-from .models import User
+from .models import LoginAttempt, User
 from .roles import ROLE_NAMES, ROLES_BY_NAME, set_user_roles, user_role_names
 
 # Los grupos son una implementación interna de permisos. El administrador no necesita
@@ -154,3 +154,19 @@ class CustomUserAdmin(UserAdmin):
             f"{count_message(updated, 'cuenta desactivada', 'cuentas desactivadas')}.",
             messages.WARNING if updated else messages.INFO,
         )
+
+
+@admin.register(LoginAttempt)
+class LoginAttemptAdmin(admin.ModelAdmin):
+    """Consulta de intentos fallidos. Eliminar los de una persona la desbloquea al instante."""
+
+    list_display = ("username", "ip_address", "created_at")
+    list_filter = ("created_at",)
+    search_fields = ("username", "ip_address")
+    date_hierarchy = "created_at"
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False

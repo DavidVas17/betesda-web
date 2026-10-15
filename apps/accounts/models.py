@@ -24,3 +24,19 @@ class User(AbstractUser):
         from .roles import user_role_names
 
         return user_role_names(self)
+
+
+class LoginAttempt(models.Model):
+    """Intento fallido de ingreso. Sirve para frenar a quien prueba contraseñas."""
+
+    username = models.CharField("usuario", max_length=150, db_index=True)
+    ip_address = models.GenericIPAddressField("dirección IP", null=True, blank=True)
+    created_at = models.DateTimeField("fecha", auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+        verbose_name = "intento fallido de ingreso"
+        verbose_name_plural = "intentos fallidos de ingreso"
+
+    def __str__(self) -> str:
+        return f"{self.username} · {self.ip_address or 'IP desconocida'}"

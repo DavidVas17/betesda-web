@@ -2,7 +2,12 @@ from urllib.parse import urlsplit
 
 from django import forms
 from django.contrib.auth import get_user_model
-from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.contrib.auth.forms import (
+    AuthenticationForm,
+    PasswordResetForm,
+    SetPasswordForm,
+    UserCreationForm,
+)
 from django.contrib.auth.models import Permission
 from django.db.models import Q
 
@@ -13,8 +18,15 @@ from apps.accounts.roles import (
     set_user_roles,
     user_role_names,
 )
+from apps.accounts.throttle import (
+    TOO_MANY_ATTEMPTS,
+    ThrottledLoginMixin,
+    record_failure,
+    seconds_until_allowed,
+)
 from apps.contacts.models import ContactMessage
 from apps.core.models import SiteConfiguration
+from apps.core.network import client_ip
 
 from .content_forms import choice_label
 from .form_layout import FieldsetsMixin
@@ -22,7 +34,7 @@ from .form_layout import FieldsetsMixin
 User = get_user_model()
 
 
-class PanelAuthenticationForm(AuthenticationForm):
+class PanelAuthenticationForm(ThrottledLoginMixin, AuthenticationForm):
     username = forms.CharField(
         label="Usuario",
         widget=forms.TextInput(attrs={"autocomplete": "username", "autofocus": True}),
@@ -37,6 +49,51 @@ class PanelAuthenticationForm(AuthenticationForm):
         super().confirm_login_allowed(user)
         if not user.is_staff:
             raise forms.ValidationError("Esta cuenta no tiene acceso al panel.", code="not_staff")
+
+
+class PanelPasswordResetForm(PasswordResetForm):
+    """Solo cuentas activas del equipo, y con el mismo freno que el ingreso.
+
+    Cada pedido cuenta como un intento: así nadie puede usar el formulario para llenar de
+    correos la bandeja de otra persona.
+    """
+
+    email = forms.EmailField(
+        label="Correo electrónico",
+        max_length=254,
+        widget=forms.EmailInput(attrs={"autocomplete": "email", "autofocus": True}),
+    )
+
+    def __init__(self, *args, request=None, **kwargs):
+        self.request = request
+        super().__init__(*args, **kwargs)
+
+    def clean_email(self):
+        email = self.cleaned_data["email"]
+        key = f"reset:{email}"
+        ip = client_ip(self.request) if self.request else None
+        wait = seconds_until_allowed(key, ip)
+        if wait:
+            minutes = max(1, -(-wait // 60))
+            raise forms.ValidationError(
+                TOO_MANY_ATTEMPTS,
+                code="too_many_attempts",
+                params={"minutes": f"{minutes} minuto" + ("s" if minutes != 1 else "")},
+            )
+        record_failure(key, ip)
+        return email
+
+    def get_users(self, email):
+        return (user for user in super().get_users(email) if user.is_staff)
+
+
+class PanelSetPasswordForm(SetPasswordForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for name in ("new_password1", "new_password2"):
+            self.fields[name].widget.attrs["autocomplete"] = "new-password"
+        self.fields["new_password1"].label = "Contraseña nueva"
+        self.fields["new_password2"].label = "Confirma la contraseña nueva"
 
 
 class MessageFollowupForm(forms.ModelForm):

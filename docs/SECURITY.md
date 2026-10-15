@@ -14,7 +14,22 @@
 - `.env` excluido de Git: cada ambiente crea el suyo desde `.env.example`;
 - administración técnica (`DJANGO_ADMIN_URL`) solo para el superusuario;
 - límite de mensajes por visitante en el formulario público (`CONTACT_RATE_LIMIT_*`);
-- IP real del visitante detrás de Caddy (`DJANGO_TRUST_X_FORWARDED_FOR`).
+- IP real del visitante detrás de Caddy (`DJANGO_TRUST_X_FORWARDED_FOR`);
+- freno a quien prueba contraseñas en el panel y en la administración técnica: 5 fallos por
+  usuario e IP, o 20 por IP, bloquean 15 minutos (`LOGIN_RATE_LIMIT_*`). El bloqueo es por
+  usuario **e** IP, así nadie puede dejar fuera a otra persona desde su conexión. El
+  superusuario puede desbloquear a alguien borrando sus "intentos fallidos de ingreso" en la
+  administración técnica;
+- recuperación de contraseña por correo solo para cuentas activas del equipo, con enlace de un
+  solo uso que vence a las 2 horas (`PASSWORD_RESET_TIMEOUT`) y el mismo freno de intentos. La
+  respuesta es idéntica exista o no la cuenta;
+- política de contenido (CSP) estricta: solo scripts, estilos, fuentes e imágenes del propio
+  sitio, sin código en línea; la única excepción es el mapa de Google. Las plantillas nunca
+  deben llevar `<script>` sin `src`, `style="…"` ni `onclick`; una prueba lo vigila. Para
+  probar un cambio sin bloquear, `DJANGO_CSP_REPORT_ONLY=true` (es lo predeterminado en
+  desarrollo);
+- `Permissions-Policy` que apaga cámara, micrófono, ubicación, pagos y USB;
+- los archivos subidos se sirven con una CSP que impide ejecutarlos como página.
 
 ## Si un secreto llegó a Git
 
@@ -35,7 +50,25 @@ Borrar el archivo del repositorio no basta: queda en el historial. Hay que cambi
 
 ## Datos personales
 
-Los formularios deben solicitar solo datos necesarios y mostrar un aviso de privacidad. Los mensajes de contacto no deben aparecer en logs, correos de prueba ni datos de demostracion. Definir con la institución un periodo de retención antes de publicar el formulario.
+Los formularios deben solicitar solo datos necesarios y mostrar un aviso de privacidad. Los mensajes de contacto no deben aparecer en logs, correos de prueba ni datos de demostracion.
+
+### Plazo de conservación
+
+Las peticiones de oración pueden contener datos muy sensibles, así que no se guardan para
+siempre (`apps/contacts/retention.py`):
+
+| Qué | Se elimina | Variable |
+| --- | --- | --- |
+| Mensajes **cerrados** | 365 días después de su último cambio | `MESSAGE_RETENTION_DAYS` |
+| Mensajes **no deseados** | 30 días después | `SPAM_RETENTION_DAYS` |
+| **IP** de cada envío | a los 90 días (el mensaje se conserva) | `IP_RETENTION_DAYS` |
+| Intentos fallidos de ingreso | al día siguiente | — |
+
+Los mensajes nuevos o en seguimiento nunca se eliminan solos. La página de contacto avisa del
+plazo y el detalle de cada solicitud cerrada muestra la fecha en que se eliminará. Confirmar los
+plazos con la iglesia antes de publicar. En producción el servicio `maintenance` corre la
+limpieza cada día; a mano: `make purge ARGS=--dry-run` para ver qué se borraría y `make purge`
+para hacerlo.
 
 ## Reporte de vulnerabilidades
 

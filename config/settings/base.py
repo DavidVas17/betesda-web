@@ -44,6 +44,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "apps.core.middleware.SecurityHeadersMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
@@ -94,6 +95,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 AUTH_USER_MODEL = "accounts.User"
 LOGIN_URL = "/panel/ingresar/"
+# El enlace para restablecer la contraseña vence a las 2 horas (Django usa 3 días).
+PASSWORD_RESET_TIMEOUT = env.int("PASSWORD_RESET_TIMEOUT", default=2 * 3600)
 LOGIN_REDIRECT_URL = "/panel/"
 LOGOUT_REDIRECT_URL = "/"
 
@@ -132,6 +135,25 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 X_FRAME_OPTIONS = "DENY"
 
+# Política de contenido: solo recursos del propio sitio, sin código en línea. Ver
+# apps/core/middleware.py. El mapa de contacto se carga desde Google Maps.
+CONTENT_SECURITY_POLICY = {
+    "default-src": ("'self'",),
+    "script-src": ("'self'",),
+    "style-src": ("'self'",),
+    "img-src": ("'self'", "data:"),
+    "font-src": ("'self'",),
+    "connect-src": ("'self'",),
+    "frame-src": ("https://www.google.com", "https://maps.google.com"),
+    "object-src": ("'none'",),
+    "base-uri": ("'self'",),
+    "form-action": ("'self'",),
+    "frame-ancestors": ("'none'",),
+}
+CSP_REPORT_ONLY = env.bool("DJANGO_CSP_REPORT_ONLY", default=False)
+# Funciones del navegador que el sitio nunca usa.
+PERMISSIONS_POLICY_DENY = ("camera", "microphone", "geolocation", "payment", "usb")
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -158,5 +180,17 @@ CONTACT_RATE_LIMIT = (
     env.int("CONTACT_RATE_LIMIT_COUNT", default=5),
     env.int("CONTACT_RATE_LIMIT_SECONDS", default=600),
 )
+# Cuántos días se guardan los mensajes (ver apps/contacts/retention.py). Los nuevos o en
+# seguimiento no se eliminan nunca de forma automática.
+MESSAGE_RETENTION_DAYS = env.int("MESSAGE_RETENTION_DAYS", default=365)
+SPAM_RETENTION_DAYS = env.int("SPAM_RETENTION_DAYS", default=30)
+IP_RETENTION_DAYS = env.int("IP_RETENTION_DAYS", default=90)
 # Detrás de un proxy propio (Caddy en producción) la IP del visitante llega en X-Forwarded-For.
 TRUST_X_FORWARDED_FOR = env.bool("DJANGO_TRUST_X_FORWARDED_FOR", default=False)
+# Ingreso al panel y a la administración técnica: fallos permitidos por usuario e IP, por IP
+# (con cualquier usuario) y la ventana en segundos tras la cual se olvidan.
+LOGIN_RATE_LIMIT = (
+    env.int("LOGIN_RATE_LIMIT_PER_USER", default=5),
+    env.int("LOGIN_RATE_LIMIT_PER_IP", default=20),
+    env.int("LOGIN_RATE_LIMIT_SECONDS", default=900),
+)

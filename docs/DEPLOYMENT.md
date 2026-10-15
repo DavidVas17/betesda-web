@@ -42,6 +42,8 @@ EMAIL_URL=smtp+tls://usuario:clave-de-aplicacion@smtp.gmail.com:587
 DEFAULT_FROM_EMAIL=Betesda Rosa de Sarón <no-responder@betesdarosadesaron.org>
 ```
 
+El mismo correo envía los enlaces de "¿Olvidaste tu contraseña?" del panel.
+
 Sin `EMAIL_URL` los avisos solo se escriben en el registro del contenedor. Con Gmail se usa
 una "contraseña de aplicación", nunca la contraseña normal de la cuenta. Cada persona necesita
 tener su correo guardado en su cuenta del panel.
@@ -56,6 +58,9 @@ docker compose -f compose.prod.yaml ps
 docker compose -f compose.prod.yaml exec web python manage.py check --deploy
 docker compose -f compose.prod.yaml exec web python manage.py bootstrap_admin
 ```
+
+`compose.prod.yaml` también levanta el servicio `maintenance`, que cada día elimina los
+mensajes que cumplieron su plazo (ver [SECURITY.md](SECURITY.md#plazo-de-conservación)).
 
 Verifique el certificado HTTPS, `/health/ready/`, el inicio de sesión, la carga de estáticos y una operación de lectura/escritura controlada.
 

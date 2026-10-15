@@ -20,6 +20,7 @@ services:
     build:
       context: .
       target: production
+    image: betesda-web:production
     restart: unless-stopped
     env_file:
       - .env
@@ -43,6 +44,25 @@ services:
     networks:
       - backend
       - frontend
+
+  # Tareas diarias: elimina mensajes que cumplieron su plazo y limpia datos temporales.
+  maintenance:
+    image: betesda-web:production
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.production
+      POSTGRES_HOST: db
+      RUN_MIGRATIONS: "false"
+      RUN_SETUP_ROLES: "false"
+      RUN_IMAGE_VARIANTS: "false"
+    command: ["sh", "-c", "while true; do python manage.py purge_old_messages; sleep 86400; done"]
+    depends_on:
+      web:
+        condition: service_healthy
+    networks:
+      - backend
 
   caddy:
     image: caddy:2.10.2-alpine

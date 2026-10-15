@@ -1,4 +1,11 @@
 from django.contrib import admin
+from django.contrib.admin.forms import AdminAuthenticationForm
+
+from apps.accounts.throttle import ThrottledLoginMixin
+
+
+class ThrottledAdminAuthenticationForm(ThrottledLoginMixin, AdminAuthenticationForm):
+    """El login de la administración técnica tiene el mismo freno que el del panel."""
 
 
 class BetesdaAdminSite(admin.AdminSite):
@@ -13,6 +20,7 @@ class BetesdaAdminSite(admin.AdminSite):
     index_title = "Mantenimiento del sitio"
     site_url = "/"
     empty_value_display = "—"
+    login_form = ThrottledAdminAuthenticationForm
 
     def has_permission(self, request):
         """La administración técnica es exclusiva del superusuario.

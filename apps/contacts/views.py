@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib import messages
 from django.db import transaction
 from django.shortcuts import redirect, render
@@ -51,6 +52,7 @@ def _contact(request):
                 kind: {key: value for key, value in mode.items() if key != "success"}
                 for kind, mode in CONTACT_MODES.items()
             },
+            "retention_months": max(1, round(settings.MESSAGE_RETENTION_DAYS / 30.4)),
             **schedule_context(),
         },
         status=status,
