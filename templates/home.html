@@ -29,6 +29,7 @@
     <a class="quick-item" href="{% url 'contacts:contact' %}?tipo=oracion#formulario"><span class="icon-tile">{% include 'includes/icon.html' with name='prayer' %}</span><span><small>Oramos contigo</small><strong>Envía tu petición de oración</strong></span></a>
   </div>
 </section>
+{% include 'includes/service_times.html' %}
 <section class="section">
   <div class="container mission-layout">
     <div><p class="eyebrow">Nuestra misión</p><h2>Formar discípulos y llevar esperanza</h2><a class="text-link" href="{% url 'core:about' %}">Nuestra historia y valores {% include 'includes/icon.html' with name='arrow' %}</a></div>

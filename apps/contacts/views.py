@@ -1,11 +1,15 @@
 from django.contrib import messages
+from django.db import transaction
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods, require_POST
 
+from apps.core.schedule import schedule_context
+
 from .forms import ContactMessageForm
 from .models import ContactMessage
 from .modes import CONTACT_MODES
+from .notifications import notify_team
 from .protection import client_ip, too_many_recent_messages
 
 RATE_LIMIT_MESSAGE = (
@@ -30,6 +34,8 @@ def _contact(request):
         message = form.save(commit=False)
         message.source_ip = ip
         message.save()
+        # Después de confirmar el guardado: si el correo falla o tarda, la petición ya está a salvo.
+        transaction.on_commit(lambda: notify_team(message, request))
         mode = CONTACT_MODES[message.kind]
         messages.success(request, mode["success"], extra_tags="contact")
         return redirect(f"{reverse('contacts:contact')}?tipo={mode['slug']}#formulario")
@@ -45,6 +51,7 @@ def _contact(request):
                 kind: {key: value for key, value in mode.items() if key != "success"}
                 for kind, mode in CONTACT_MODES.items()
             },
+            **schedule_context(),
         },
         status=status,
     )

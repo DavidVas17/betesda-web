@@ -45,6 +45,7 @@ CHURCH_ADMIN = Role(
         "core.siteconfiguration": ("add", "change", "view"),
         "core.ministry": _FULL,
         "core.churchvalue": _FULL,
+        "core.servicetime": _FULL,
         "accounts.user": ("manage_team", "view_activity"),
     },
 )

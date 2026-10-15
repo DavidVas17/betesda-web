@@ -117,8 +117,13 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-DEFAULT_FROM_EMAIL = "webmaster@localhost"
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+# Correo: EMAIL_URL define el servidor (por ejemplo smtp+tls://usuario:clave@smtp.dominio:587).
+# Sin configurarlo, los correos se muestran en la consola en lugar de enviarse.
+globals().update(env.email_url("EMAIL_URL", default="consolemail://"))
+DEFAULT_FROM_EMAIL = env.str(
+    "DEFAULT_FROM_EMAIL", default="Betesda Rosa de Sarón <no-responder@localhost>"
+)
+EMAIL_TIMEOUT = env.int("EMAIL_TIMEOUT", default=10)
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024

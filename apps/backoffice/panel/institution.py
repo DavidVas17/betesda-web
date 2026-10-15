@@ -10,7 +10,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.views.decorators.http import require_GET, require_http_methods
 
-from apps.core.models import ChurchValue, Ministry
+from apps.core.models import ChurchValue, Ministry, ServiceTime
 
 from .access import panel_required, require_permission
 from .form_layout import FieldsetsMixin
@@ -60,6 +60,55 @@ class ChurchValueForm(FieldsetsMixin, forms.ModelForm):
         widgets = {"description": forms.Textarea(attrs={"rows": 3})}
 
 
+class ServiceTimeForm(FieldsetsMixin, forms.ModelForm):
+    fieldsets = (
+        ("El culto", "Cómo se llama y algún detalle útil para quien visita.", ("name", "note")),
+        (
+            "Día y hora",
+            "Hora local de Guatemala. Se repite cada semana.",
+            (
+                "day",
+                "starts_at",
+                "ends_at",
+            ),
+        ),
+        ("En el sitio", "Apágalo si se suspende por un tiempo.", ("is_active",)),
+    )
+
+    class Meta:
+        model = ServiceTime
+        fields = ("name", "note", "day", "starts_at", "ends_at", "is_active")
+        labels = {
+            "name": "Nombre del culto o reunión",
+            "note": "Detalle",
+            "day": "Día",
+            "starts_at": "Hora de inicio",
+            "ends_at": "Hora de finalización",
+            "is_active": "Mostrar en el sitio",
+        }
+        help_texts = {
+            "name": "Por ejemplo: Culto general, Escuela dominical, Reunión de jóvenes.",
+            "note": "Opcional. Por ejemplo: Para toda la familia.",
+            "ends_at": "Déjala vacía si no hay hora fija de finalización.",
+        }
+        widgets = {
+            "starts_at": forms.TimeInput(format="%H:%M", attrs={"type": "time", "data-starts": ""}),
+            "ends_at": forms.TimeInput(format="%H:%M", attrs={"type": "time", "data-ends": ""}),
+        }
+
+
+def _describe_service(item):
+    return item.get_day_display()[:3], f"{item.name} · {item.time_label} h", item.note
+
+
+def _describe_ministry(item):
+    return item.order, item.name, f"{item.tag} · {item.description}"
+
+
+def _describe_value(item):
+    return item.order, item.name, item.description
+
+
 @dataclass(frozen=True)
 class Section:
     model: type
@@ -68,16 +117,44 @@ class Section:
     singular: str
     plural: str
     article: str
+    describe: object
+    hint: str
 
     def perm(self, action: str) -> str:
         return f"core.{action}_{self.model._meta.model_name}"
 
 
 SECTIONS = {
-    "ministerios": Section(
-        Ministry, MinistryForm, "ministerios", "ministerio", "Ministerios", "el"
+    "horarios": Section(
+        ServiceTime,
+        ServiceTimeForm,
+        "horarios",
+        "horario",
+        "Horarios de culto",
+        "el",
+        _describe_service,
+        "Se muestran en Inicio, con el próximo culto destacado, y en Contacto.",
     ),
-    "valores": Section(ChurchValue, ChurchValueForm, "valores", "valor", "Valores", "el"),
+    "ministerios": Section(
+        Ministry,
+        MinistryForm,
+        "ministerios",
+        "ministerio",
+        "Ministerios",
+        "el",
+        _describe_ministry,
+        "Se muestran en Inicio (los tres primeros) y en la página Ministerios.",
+    ),
+    "valores": Section(
+        ChurchValue,
+        ChurchValueForm,
+        "valores",
+        "valor",
+        "Valores",
+        "el",
+        _describe_value,
+        "Se muestran en la página Nosotros.",
+    ),
 }
 
 
@@ -90,7 +167,7 @@ def _section(kind: str) -> Section:
         raise Http404 from error
 
 
-@panel_required(("core.view_ministry", "core.view_churchvalue"))
+@panel_required(("core.view_ministry", "core.view_churchvalue", "core.view_servicetime"))
 @require_GET
 def overview(request):
     user = request.user
@@ -101,6 +178,7 @@ def overview(request):
         items = list(section.model.objects.all())
         for item in items:
             item.edit_url = reverse("panel:institution_edit", args=[section.key, item.pk])
+            item.badge, item.title, item.subtitle = section.describe(item)
         groups.append(
             {
                 "section": section,
@@ -116,7 +194,7 @@ def overview(request):
         {"groups": groups},
         active="institution",
         title="Nuestra iglesia",
-        subtitle="Los ministerios y valores que se muestran en el sitio.",
+        subtitle="Horarios, ministerios y valores que se muestran en el sitio.",
     )
 
 
@@ -164,19 +242,19 @@ def _form_view(request, kind, pk=None):
     )
 
 
-@panel_required(("core.add_ministry", "core.add_churchvalue"))
+@panel_required(("core.add_ministry", "core.add_churchvalue", "core.add_servicetime"))
 @require_http_methods(["GET", "POST"])
 def create(request, kind):
     return _form_view(request, kind)
 
 
-@panel_required(("core.view_ministry", "core.view_churchvalue"))
+@panel_required(("core.view_ministry", "core.view_churchvalue", "core.view_servicetime"))
 @require_http_methods(["GET", "POST"])
 def edit(request, kind, pk):
     return _form_view(request, kind, pk)
 
 
-@panel_required(("core.delete_ministry", "core.delete_churchvalue"))
+@panel_required(("core.delete_ministry", "core.delete_churchvalue", "core.delete_servicetime"))
 @require_http_methods(["GET", "POST"])
 def delete(request, kind, pk):
     section = _section(kind)

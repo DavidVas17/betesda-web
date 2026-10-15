@@ -7,6 +7,7 @@ from apps.events.selectors import upcoming_events
 from apps.news.selectors import published_posts
 
 from .models import ChurchValue, Ministry
+from .schedule import schedule_context
 
 
 def home(request: HttpRequest) -> HttpResponse:
@@ -17,6 +18,7 @@ def home(request: HttpRequest) -> HttpResponse:
             "events": upcoming_events(limit=3),
             "posts": published_posts().order_by("-is_featured", "-published_at")[:3],
             "ministries": Ministry.objects.filter(is_active=True)[:3],
+            **schedule_context(),
         },
     )
 

@@ -36,7 +36,7 @@ def account(request):
     form = ProfileForm(request.POST or None, instance=request.user)
     if request.method == "POST" and form.is_valid():
         user = form.save(commit=False)
-        user.save(update_fields=("first_name", "last_name", "email"))
+        user.save(update_fields=[name for name in form.fields if name in form.cleaned_data])
         audit(request, user, message="Actualizar perfil personal")
         messages.success(request, "Tu información se actualizó correctamente.")
         return redirect("panel:account")

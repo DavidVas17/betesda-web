@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block title %}Peticiones de oración / Contáctanos | Betesda Rosa de Sarón{% endblock %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'css/contact.css' %}?v=forms-20261011"><link rel="stylesheet" href="{% static 'css/contact-page.css' %}?v=carbon-20261011">{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/contact.css' %}?v=horarios-20261014"><link rel="stylesheet" href="{% static 'css/contact-page.css' %}?v=carbon-20261011">{% endblock %}
 {% block extra_js %}<script src="{% static 'js/contact.js' %}?v=forms-20261011" defer></script><script src="{% static 'js/forms.js' %}?v=forms-20261011" defer></script>{% endblock %}
 {% block content %}
   {% include 'includes/page_heading.html' with eyebrow='Estamos para escucharte' heading='Peticiones de oración / Contáctanos' intro='Comparte una petición de oración o escríbenos para conocer más de la iglesia. Elige la opción que necesitas.' %}
@@ -9,6 +9,7 @@
     <div class="contact-info"><p class="eyebrow">Cerca de ti</p><h2 id="contact-title" data-contact-copy="left_title">{{ contact_mode.left_title }}</h2><p class="contact-intro" data-contact-copy="intro">{{ contact_mode.intro }}</p>
       <div class="contact-details">
         <div class="contact-detail"><span class="contact-icon">{% include 'includes/icon.html' with name='pin' %}</span><div><h3>Visítanos</h3><p>{{ site.address }}</p><a class="contact-map-link" href="{{ site.map_url }}" target="_blank" rel="noopener noreferrer">Cómo llegar {% include 'includes/icon.html' with name='external' %}</a></div></div>
+        {% if service_days %}<div class="contact-detail contact-schedule"><span class="contact-icon">{% include 'includes/icon.html' with name='clock' %}</span><div><h3>Horarios de culto</h3><ul>{% for day, services in service_days %}{% for service in services %}<li><span>{{ day }} · {{ service.time_label }} h</span>{{ service.name }}</li>{% endfor %}{% endfor %}</ul></div></div>{% endif %}
         <div class="contact-detail"><span class="contact-icon">{% include 'includes/icon.html' with name='phone' %}</span><div><h3>Llámanos</h3><p><a href="tel:{{ site.phone_link }}">{{ site.phone }}</a></p></div></div>
         <div class="contact-detail"><span class="contact-icon">{% include 'includes/icon.html' with name='facebook' %}</span><div><h3>También en Facebook</h3><p><a href="{{ site.facebook_url }}" target="_blank" rel="noopener noreferrer">Rosa de Sarón</a></p></div></div>
         {% if site.email %}<div class="contact-detail"><span class="contact-icon">{% include 'includes/icon.html' with name='mail' %}</span><div><h3>Correo electrónico</h3><p><a href="mailto:{{ site.email }}">{{ site.email }}</a></p></div></div>{% endif %}

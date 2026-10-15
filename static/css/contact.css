@@ -97,3 +97,5 @@ button[aria-busy="true"] { cursor: progress; opacity: .9; }
 .fk-counter-row[hidden] { display: none; }
 .fk-summary { scroll-margin-top: 7rem; }
 .contact-field input[aria-invalid="true"]:not([type="checkbox"]), .contact-field textarea[aria-invalid="true"] { border-color: #b8473d; background: #fffafa; }
+.contact-schedule ul { display: grid; gap: .45rem; margin: .25rem 0 0; padding: 0; list-style: none; color: var(--ink); font-size: .95rem; }
+.contact-schedule li span { display: block; color: var(--gold-text); font-size: .78rem; font-weight: 700; letter-spacing: .04em; }

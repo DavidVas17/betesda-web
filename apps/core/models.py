@@ -87,3 +87,41 @@ class ChurchValue(TimeStampedModel):
 
     def __str__(self) -> str:
         return self.name
+
+
+class ServiceTime(TimeStampedModel):
+    """Un culto o reunión que se repite cada semana."""
+
+    class Day(models.IntegerChoices):
+        # Mismo orden que datetime.weekday(): lunes = 0.
+        MONDAY = 0, "Lunes"
+        TUESDAY = 1, "Martes"
+        WEDNESDAY = 2, "Miércoles"
+        THURSDAY = 3, "Jueves"
+        FRIDAY = 4, "Viernes"
+        SATURDAY = 5, "Sábado"
+        SUNDAY = 6, "Domingo"
+
+    name = models.CharField("nombre", max_length=80)
+    day = models.PositiveSmallIntegerField("día", choices=Day.choices)
+    starts_at = models.TimeField("hora de inicio")
+    ends_at = models.TimeField("hora de finalización", null=True, blank=True)
+    note = models.CharField("detalle", max_length=140, blank=True)
+    is_active = models.BooleanField("mostrar en el sitio", default=True)
+
+    class Meta:
+        ordering = ("day", "starts_at", "name")
+        verbose_name = "horario de culto"
+        verbose_name_plural = "horarios de culto"
+
+    def __str__(self) -> str:
+        return f"{self.name} · {self.get_day_display()} {self.starts_at:%H:%M}"
+
+    def clean(self) -> None:
+        if self.starts_at and self.ends_at and self.ends_at <= self.starts_at:
+            raise ValidationError({"ends_at": "La finalización debe ser después del inicio."})
+
+    @property
+    def time_label(self) -> str:
+        start = f"{self.starts_at:%H:%M}"
+        return f"{start} a {self.ends_at:%H:%M}" if self.ends_at else start

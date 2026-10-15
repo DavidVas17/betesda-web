@@ -29,7 +29,7 @@ mano.
 | Exportar mensajes a CSV | Sí | No | No | No | No | No |
 | Eliminar mensajes | Sí | No | No | No | No | No |
 | Configuración del sitio | Sí | No | No | No | No | No |
-| Nuestra iglesia: ministerios y valores | Sí | No | No | No | No | No |
+| Nuestra iglesia: horarios, ministerios y valores | Sí | No | No | No | No | No |
 | Gestionar usuarios y sus roles | Sí (ver reglas) | No | No | No | No | No |
 | Ver la bitácora de actividad | Sí | No | No | No | No | No |
 
@@ -48,6 +48,8 @@ La prueba `tests/test_roles.py::test_panel_matrix` comprueba esta tabla contra l
 - Al desactivar una cuenta, sus solicitudes abiertas quedan "Sin asignar". Una solicitud solo se
   puede asignar a alguien que puede leer mensajes.
 - Cada cambio de cuenta queda en la bitácora con los roles resultantes.
+- Quien puede leer mensajes recibe un aviso por correo cuando llega uno nuevo, sin su
+  contenido. Lo puede apagar en "Mi cuenta".
 
 ## Cambiar un rol
 

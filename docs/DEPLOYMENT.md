@@ -28,7 +28,23 @@ DJANGO_ALLOWED_HOSTS=betesdarosadesaron.org,www.betesdarosadesaron.org
 DJANGO_CSRF_TRUSTED_ORIGINS=https://betesdarosadesaron.org,https://www.betesdarosadesaron.org
 CADDY_DOMAIN=betesdarosadesaron.org, www.betesdarosadesaron.org
 SECURE_HSTS_SECONDS=31536000
+DJANGO_ADMIN_URL=una-ruta-propia/
 ```
+
+### Correo de avisos
+
+Cuando entra una petición de oración o un mensaje, el sitio avisa por correo a quienes
+pueden leer mensajes (Atención y oración, Administración de la iglesia) y no apagaron el
+aviso en "Mi cuenta". El correo no incluye el contenido: solo enlaza al panel.
+
+```dotenv
+EMAIL_URL=smtp+tls://usuario:clave-de-aplicacion@smtp.gmail.com:587
+DEFAULT_FROM_EMAIL=Betesda Rosa de Sarón <no-responder@betesdarosadesaron.org>
+```
+
+Sin `EMAIL_URL` los avisos solo se escriben en el registro del contenedor. Con Gmail se usa
+una "contraseña de aplicación", nunca la contraseña normal de la cuenta. Cada persona necesita
+tener su correo guardado en su cuenta del panel.
 
 ## Primera publicación
 

@@ -3,15 +3,15 @@
 {% include 'panel/heading.html' %}
 {% for group in groups %}
 <section class="p-card p-list-card p-institution-card">
-  <div class="p-card-heading"><div><h2>{{ group.section.plural }}</h2><p>{% if group.section.key == 'ministerios' %}Se muestran en Inicio (los tres primeros) y en la página Ministerios.{% else %}Se muestran en la página Nosotros.{% endif %}</p></div>{% if group.create_url %}<a class="p-button p-button-primary p-button-small" href="{{ group.create_url }}">{% include 'panel/icon.html' with name='plus' %}Agregar {{ group.section.singular }}</a>{% endif %}</div>
+  <div class="p-card-heading"><div><h2>{{ group.section.plural }}</h2><p>{{ group.section.hint }}</p></div>{% if group.create_url %}<a class="p-button p-button-primary p-button-small" href="{{ group.create_url }}">{% include 'panel/icon.html' with name='plus' %}Agregar {{ group.section.singular }}</a>{% endif %}</div>
   {% if group.items %}
   <ul class="p-institution-list">
     {% for item in group.items %}
-    <li><a href="{{ item.edit_url }}"><span class="p-institution-order">{{ item.order }}</span><span class="p-institution-copy"><strong>{{ item.name }}</strong><span>{% if item.tag %}{{ item.tag }} · {% endif %}{{ item.description|truncatechars:110 }}</span></span><span class="p-badge{% if item.is_active %} p-badge-green{% endif %}">{% if item.is_active %}Visible{% else %}Oculto{% endif %}</span>{% include 'panel/icon.html' with name='chevron' %}</a></li>
+    <li><a href="{{ item.edit_url }}"><span class="p-institution-order">{{ item.badge }}</span><span class="p-institution-copy"><strong>{{ item.title }}</strong>{% if item.subtitle %}<span>{{ item.subtitle|truncatechars:120 }}</span>{% endif %}</span><span class="p-badge{% if item.is_active %} p-badge-green{% endif %}">{% if item.is_active %}Visible{% else %}Oculto{% endif %}</span>{% include 'panel/icon.html' with name='chevron' %}</a></li>
     {% endfor %}
   </ul>
   {% else %}
-  <div class="p-empty">{% include 'panel/icon.html' with name='church' %}<h2>Aún no hay {{ group.section.plural|lower }}</h2><p>Agrega el primero para mostrarlo en el sitio.</p></div>
+  <div class="p-empty">{% include 'panel/icon.html' with name='church' %}<h2>Aún no hay {{ group.section.plural|lower }}</h2><p>{% if group.section.key == 'horarios' %}Agrega los cultos de la semana: así quien visita el sitio sabe cuándo llegar.{% else %}Agrega el primero para mostrarlo en el sitio.{% endif %}</p></div>
   {% endif %}
 </section>
 {% endfor %}

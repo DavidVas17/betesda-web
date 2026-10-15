@@ -1,0 +1,34 @@
+{% if service_days %}
+<section class="section schedule-section" id="horarios" aria-labelledby="schedule-title">
+  <div class="container schedule-layout">
+    <div class="schedule-intro">
+      <p class="eyebrow">Te esperamos</p>
+      <h2 id="schedule-title">Horarios de culto</h2>
+      <p>{{ site.address }}</p>
+      {% if next_service %}
+      <div class="next-service{% if next_service.in_progress %} is-live{% endif %}">
+        <span class="next-service-label">{% if next_service.in_progress %}<span class="live-dot" aria-hidden="true"></span>En este momento{% else %}Próximo culto{% endif %}</span>
+        <strong>{{ next_service.service.name }}</strong>
+        <span>{{ next_service.label }}{% if not next_service.in_progress %} · {{ next_service.service.time_label }} h{% endif %}</span>
+      </div>
+      {% endif %}
+      <a class="text-link" href="{{ site.map_url }}" target="_blank" rel="noopener noreferrer">Cómo llegar {% include 'includes/icon.html' with name='external' %}</a>
+    </div>
+    <ul class="schedule-list">
+      {% for day, services in service_days %}
+      <li class="schedule-day">
+        <span class="schedule-day-name">{{ day }}</span>
+        <ul>
+          {% for service in services %}
+          <li class="schedule-item{% if next_service and next_service.service.pk == service.pk %} is-next{% endif %}">
+            <span class="schedule-time">{% include 'includes/icon.html' with name='clock' %}{{ service.time_label }} h</span>
+            <span class="schedule-copy"><strong>{{ service.name }}</strong>{% if service.note %}<span>{{ service.note }}</span>{% endif %}</span>
+          </li>
+          {% endfor %}
+        </ul>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endif %}

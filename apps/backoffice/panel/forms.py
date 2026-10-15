@@ -241,9 +241,20 @@ class TeamUserEditForm(TeamRolesMixin, forms.ModelForm):
 class ProfileForm(forms.ModelForm):
     class Meta:
         model = User
-        fields = ("first_name", "last_name", "email")
+        fields = ("first_name", "last_name", "email", "notify_new_messages")
         labels = {
             "first_name": "Nombre",
             "last_name": "Apellido",
             "email": "Correo electrónico",
+            "notify_new_messages": "Avisarme por correo de mensajes nuevos",
         }
+        help_texts = {
+            "notify_new_messages": "Te llega un aviso, sin el contenido, cuando alguien escribe "
+            "en el sitio. Necesitas tener tu correo guardado arriba.",
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Solo tiene sentido para quien puede leer los mensajes.
+        if not self.instance.has_perm("contacts.view_contactmessage"):
+            self.fields.pop("notify_new_messages")
