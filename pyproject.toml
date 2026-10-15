@@ -24,7 +24,9 @@ dev = [
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "config.settings.test"
 python_files = ["test_*.py", "*_test.py"]
-addopts = "-ra --strict-markers --strict-config"
+# --ds le gana a DJANGO_SETTINGS_MODULE del .env (que apunta a local): las pruebas siempre
+# usan config.settings.test, también dentro del contenedor y con make test.
+addopts = "-ra --strict-markers --strict-config --ds=config.settings.test"
 testpaths = ["tests"]
 
 [tool.coverage.run]
