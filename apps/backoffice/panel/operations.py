@@ -10,6 +10,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.views.decorators.http import require_GET, require_http_methods
 
+from apps.accounts.alerts import alert_account_created, alert_password_changed
 from apps.accounts.roles import PRIVILEGED_ROLE_NAMES, ROLE_NAMES
 from apps.contacts.models import ContactMessage
 from apps.core.content import INSTITUTION
@@ -194,6 +195,9 @@ def _team_form(request, pk=None):
                 message=f"{summary}. Roles: {roles}."
                 + (f" Solicitudes liberadas: {released}." if released else ""),
             )
+        if user is None and not set(form.cleaned_data["roles"]) & PRIVILEGED_ROLE_NAMES:
+            # Las cuentas con privilegios ya generan su propio aviso al recibir el rol.
+            alert_account_created(request.user, saved, form.cleaned_data["roles"])
         messages.success(request, "Cuenta guardada correctamente.")
         return redirect("panel:user_edit", pk=saved.pk)
     return panel_render(
@@ -282,6 +286,7 @@ def user_password(request, pk):
         user = form.save(commit=False)
         user.save(update_fields=("password",))
         audit(request, user, message="Contraseña de cuenta restablecida.")
+        alert_password_changed(user, by=request.user, request=request)
         messages.success(request, "Contraseña actualizada correctamente.")
         return redirect("panel:user_edit", pk=pk)
     return panel_render(

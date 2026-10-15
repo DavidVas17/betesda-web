@@ -45,6 +45,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "apps.core.middleware.SecurityHeadersMiddleware",
+    "apps.accounts.alerts.DeviceCookieMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
@@ -99,6 +100,10 @@ LOGIN_URL = "/panel/ingresar/"
 PASSWORD_RESET_TIMEOUT = env.int("PASSWORD_RESET_TIMEOUT", default=2 * 3600)
 LOGIN_REDIRECT_URL = "/panel/"
 LOGOUT_REDIRECT_URL = "/"
+# La sesión del panel se cierra tras estas horas sin actividad: cada visita reinicia el
+# plazo. Protege una cuenta abierta en una computadora compartida de la iglesia.
+SESSION_COOKIE_AGE = env.int("PANEL_SESSION_HOURS", default=8) * 3600
+SESSION_SAVE_EVERY_REQUEST = True
 
 LANGUAGE_CODE = "es-gt"
 # El sitio solo existe en español: así un navegador en otro idioma no mezcla fechas en inglés.
@@ -127,6 +132,11 @@ DEFAULT_FROM_EMAIL = env.str(
     "DEFAULT_FROM_EMAIL", default="Betesda Rosa de Sarón <no-responder@localhost>"
 )
 EMAIL_TIMEOUT = env.int("EMAIL_TIMEOUT", default=10)
+# Correos extra que reciben los avisos de seguridad (bloqueos, cuentas nuevas, privilegios),
+# además del superusuario y Administración de la iglesia. Separados por coma.
+SECURITY_ALERT_EMAILS = env.list("SECURITY_ALERT_EMAILS", default=[])
+# Dirección pública del sitio, para los enlaces de correos enviados fuera de una visita.
+SITE_URL = env.str("SITE_URL", default="")
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024

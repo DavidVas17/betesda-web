@@ -9,7 +9,7 @@ from django.contrib.auth.models import Group
 
 from apps.backoffice.utils import badge, count_message
 
-from .models import LoginAttempt, User
+from .models import KnownDevice, LoginAttempt, User
 from .roles import ROLE_NAMES, ROLES_BY_NAME, set_user_roles, user_role_names
 
 # Los grupos son una implementación interna de permisos. El administrador no necesita
@@ -169,4 +169,17 @@ class LoginAttemptAdmin(admin.ModelAdmin):
         return False
 
     def has_change_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(KnownDevice)
+class KnownDeviceAdmin(admin.ModelAdmin):
+    """Navegadores reconocidos. Eliminar uno hace que el próximo ingreso desde él avise."""
+
+    list_display = ("user", "label", "ip_address", "created_at", "last_seen")
+    list_filter = ("last_seen",)
+    search_fields = ("user__username", "label", "ip_address")
+    readonly_fields = ("user", "key", "label", "ip_address", "created_at", "last_seen")
+
+    def has_add_permission(self, request):
         return False

@@ -50,12 +50,35 @@ def seconds_until_allowed(username: str | None, ip: str | None) -> int:
     return max(wait, 0)
 
 
-def record_failure(username: str | None, ip: str | None) -> None:
-    LoginAttempt.objects.create(username=_normalize(username), ip_address=ip)
+def record_failure(username: str | None, ip: str | None, *, request=None) -> None:
+    """Guarda el fallo y, si con él se alcanza un límite, avisa por correo (una sola vez)."""
+    from .alerts import alert_login_locked
+
+    name = _normalize(username)
+    LoginAttempt.objects.create(username=name, ip_address=ip)
+    per_user, per_ip, window = settings.LOGIN_RATE_LIMIT
+    recent = LoginAttempt.objects.filter(created_at__gte=_window_start(window))
+    if ip and recent.filter(ip_address=ip).count() == per_ip:
+        alert_login_locked(name, ip, by_ip=True, request=request)
+    elif (
+        not name.startswith("reset:")
+        and recent.filter(username=name, ip_address=ip).count() == per_user
+    ):
+        alert_login_locked(name, ip, by_ip=False, request=request)
 
 
 def clear_failures(username: str | None, ip: str | None) -> None:
     LoginAttempt.objects.filter(username=_normalize(username), ip_address=ip).delete()
+
+
+def purge_stale_devices(days: int = 365) -> int:
+    """Olvida los navegadores que no se usan hace un año (guardan la última IP)."""
+    from .models import KnownDevice
+
+    deleted, _ = KnownDevice.objects.filter(
+        last_seen__lt=timezone.now() - timedelta(days=days)
+    ).delete()
+    return deleted
 
 
 def purge_old_attempts() -> int:
@@ -89,7 +112,7 @@ class ThrottledLoginMixin:
             cleaned = super().clean()
         except forms.ValidationError as error:
             if any(e.code == "invalid_login" for e in error.error_list):
-                record_failure(username, ip)
+                record_failure(username, ip, request=self.request)
             raise
         clear_failures(username, ip)
         return cleaned

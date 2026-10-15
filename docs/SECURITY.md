@@ -29,7 +29,29 @@
   probar un cambio sin bloquear, `DJANGO_CSP_REPORT_ONLY=true` (es lo predeterminado en
   desarrollo);
 - `Permissions-Policy` que apaga cámara, micrófono, ubicación, pagos y USB;
-- los archivos subidos se sirven con una CSP que impide ejecutarlos como página.
+- los archivos subidos se sirven con una CSP que impide ejecutarlos como página;
+- las fotos se guardan sin metadatos: al subirlas se quita el EXIF (ubicación GPS, fecha,
+  modelo del teléfono) y se aplica la orientación. `strip_image_metadata` limpia las que se
+  subieron antes; corre en cada despliegue y no toca las que ya están limpias;
+- la sesión del panel se cierra tras 8 horas sin actividad (`PANEL_SESSION_HOURS`);
+- avisos de seguridad por correo (`apps/accounts/alerts.py`), sin contraseñas ni contenido
+  de mensajes:
+
+  | Evento | Quién recibe el aviso |
+  | --- | --- |
+  | Ingreso bloqueado por intentos fallidos | la persona dueña de la cuenta y quienes administran |
+  | Muchos usuarios probados desde una conexión | quienes administran |
+  | Inicio de sesión desde un navegador nuevo | la persona (el primer ingreso no avisa) |
+  | Contraseña cambiada | la persona |
+  | Cuenta nueva en el panel | quienes administran, menos quien la creó |
+  | Rol de Administración de la iglesia o superusuario otorgado | la persona y quienes administran |
+
+  "Quienes administran" son los superusuarios, Administración de la iglesia y los correos de
+  `SECURITY_ALERT_EMAILS`. El navegador se reconoce con una cookie aleatoria; en la base solo
+  se guarda su huella, y los que no se usan en un año se olvidan;
+- vulnerabilidades en dependencias: el CI corre `pip-audit` sobre las versiones exactas de
+  `uv.lock` en cada PR y cada lunes, y Dependabot abre PRs con las actualizaciones de Python,
+  Docker y GitHub Actions. Un PR de seguridad de Dependabot se revisa y se mezcla primero.
 
 ## Si un secreto llegó a Git
 

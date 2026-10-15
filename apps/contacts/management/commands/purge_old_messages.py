@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 
-from apps.accounts.throttle import purge_old_attempts
+from apps.accounts.throttle import purge_old_attempts, purge_stale_devices
 from apps.contacts.retention import purge
 
 
@@ -20,9 +20,11 @@ class Command(BaseCommand):
     def handle(self, *args, dry_run=False, **options):
         result = purge(dry_run=dry_run)
         attempts = 0 if dry_run else purge_old_attempts()
+        devices = 0 if dry_run else purge_stale_devices()
         verb = "Se eliminarían" if dry_run else "Eliminados"
         self.stdout.write(
             f"{verb}: {result.closed} cerrados y {result.spam} no deseados. "
             f"IP {'por borrar' if dry_run else 'borradas'}: {result.anonymized}. "
-            f"Intentos de ingreso antiguos limpiados: {attempts}."
+            f"Intentos de ingreso antiguos limpiados: {attempts}. "
+            f"Dispositivos sin uso olvidados: {devices}."
         )

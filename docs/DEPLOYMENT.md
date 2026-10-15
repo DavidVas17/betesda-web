@@ -42,7 +42,13 @@ EMAIL_URL=smtp+tls://usuario:clave-de-aplicacion@smtp.gmail.com:587
 DEFAULT_FROM_EMAIL=Betesda Rosa de Sarón <no-responder@betesdarosadesaron.org>
 ```
 
-El mismo correo envía los enlaces de "¿Olvidaste tu contraseña?" del panel.
+El mismo correo envía los enlaces de "¿Olvidaste tu contraseña?" del panel y los avisos de
+seguridad. Conviene definir también:
+
+```dotenv
+SITE_URL=https://betesdarosadesaron.org
+SECURITY_ALERT_EMAILS=quien-administra-el-servidor@ejemplo.org
+```
 
 Sin `EMAIL_URL` los avisos solo se escriben en el registro del contenedor. Con Gmail se usa
 una "contraseña de aplicación", nunca la contraseña normal de la cuenta. Cada persona necesita

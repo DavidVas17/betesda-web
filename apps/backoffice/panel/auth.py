@@ -10,6 +10,8 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods, require_POST
 
+from apps.accounts.alerts import alert_password_changed
+
 from .access import panel_required
 from .forms import (
     PanelAuthenticationForm,
@@ -110,6 +112,7 @@ def password_change(request):
         user.save(update_fields=("password",))
         update_session_auth_hash(request, user)
         audit(request, user, message="Cambiar contraseña personal")
+        alert_password_changed(user, request=request)
         messages.success(request, "Tu contraseña cambió. Tu sesión sigue abierta.")
         return redirect("panel:account")
     return panel_render(

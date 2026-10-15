@@ -40,3 +40,24 @@ class LoginAttempt(models.Model):
 
     def __str__(self) -> str:
         return f"{self.username} · {self.ip_address or 'IP desconocida'}"
+
+
+class KnownDevice(models.Model):
+    """Navegador desde el que una cuenta ya inició sesión. Se reconoce por una cookie."""
+
+    user = models.ForeignKey(
+        User, verbose_name="usuario", on_delete=models.CASCADE, related_name="known_devices"
+    )
+    key = models.CharField("huella", max_length=64, db_index=True)
+    label = models.CharField("dispositivo", max_length=80)
+    ip_address = models.GenericIPAddressField("última IP", null=True, blank=True)
+    created_at = models.DateTimeField("primer ingreso", auto_now_add=True)
+    last_seen = models.DateTimeField("último ingreso", auto_now_add=True)
+
+    class Meta:
+        ordering = ("-last_seen",)
+        verbose_name = "dispositivo conocido"
+        verbose_name_plural = "dispositivos conocidos"
+
+    def __str__(self) -> str:
+        return f"{self.user} · {self.label}"

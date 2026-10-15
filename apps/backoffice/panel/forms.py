@@ -80,7 +80,7 @@ class PanelPasswordResetForm(PasswordResetForm):
                 code="too_many_attempts",
                 params={"minutes": f"{minutes} minuto" + ("s" if minutes != 1 else "")},
             )
-        record_failure(key, ip)
+        record_failure(key, ip, request=self.request)
         return email
 
     def get_users(self, email):

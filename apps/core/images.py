@@ -2,7 +2,12 @@
 
 Una foto de celular pesa varios megabytes. El sitio no debe enviarla completa a cada visita:
 al guardar, cada imagen genera versiones WebP con un ancho máximo (una para tarjetas y otra
-para páginas de detalle o la vista ampliada). La imagen original se conserva intacta.
+para páginas de detalle o la vista ampliada).
+
+La imagen original se conserva, pero sin metadatos: las fotos de celular guardan en su EXIF la
+ubicación GPS exacta, la fecha y el modelo del teléfono, y cualquiera que descargue la foto
+podría leerlos (por ejemplo, la casa de un miembro). Al subirla se quitan y se aplica la
+orientación, para que la foto no aparezca girada.
 
 Uso en un modelo::
 
@@ -21,6 +26,51 @@ from PIL import Image, ImageOps, UnidentifiedImageError
 logger = logging.getLogger(__name__)
 
 WEBP_QUALITY = 80
+ORIGINAL_QUALITY = 92
+# Claves de ``Image.info`` que llevan datos de la persona o del dispositivo.
+METADATA_KEYS = ("exif", "xmp", "XML:com.adobe.xmp", "comment", "Description", "Author")
+
+
+def has_metadata(image: Image.Image) -> bool:
+    info_keys = set(image.info) - {"icc_profile", "dpi", "transparency", "gamma", "duration"}
+    return (
+        bool(image.getexif())
+        or bool(info_keys & set(METADATA_KEYS))
+        or bool(getattr(image, "text", None))
+    )
+
+
+def strip_metadata(source) -> ContentFile | None:
+    """La misma imagen, en su formato, sin EXIF/GPS ni comentarios. ``None`` si ya está limpia.
+
+    Se conserva el perfil de color para que los tonos no cambien.
+    """
+    try:
+        source.open("rb")
+        source.seek(0)
+        with Image.open(source) as original:
+            image_format = original.format
+            if image_format not in ("JPEG", "PNG", "WEBP") or not has_metadata(original):
+                return None
+            icc_profile = original.info.get("icc_profile")
+            image = ImageOps.exif_transpose(original)
+            options = {"icc_profile": icc_profile} if icc_profile else {}
+            if image_format == "JPEG":
+                if image.mode not in ("RGB", "L"):
+                    image = image.convert("RGB")
+                options.update(quality=ORIGINAL_QUALITY, optimize=True)
+            elif image_format == "WEBP":
+                options.update(quality=ORIGINAL_QUALITY)
+            else:
+                options.update(optimize=True)
+            buffer = io.BytesIO()
+            image.save(buffer, image_format, **options)
+    except (OSError, UnidentifiedImageError, ValueError):
+        logger.warning("No se pudo limpiar %s", getattr(source, "name", source))
+        return None
+    finally:
+        source.seek(0)
+    return ContentFile(buffer.getvalue(), name=PurePosixPath(source.name).name)
 
 
 def build_variant(source, max_width: int) -> ContentFile | None:
@@ -91,6 +141,12 @@ class ImageVariantsMixin(models.Model):
                         changed.append(variant_name)
                 continue
             outdated = current != previous.get(source_name)
+            if not getattr(source, "_committed", True):
+                # Archivo recién subido: se guarda sin metadatos.
+                clean = strip_metadata(source)
+                if clean is not None:
+                    setattr(self, source_name, clean)
+                    source = getattr(self, source_name)
             if not (force or outdated or self._variants_missing(source_name)):
                 continue
             for variant_name, width in variants:
