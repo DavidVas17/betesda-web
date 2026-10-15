@@ -4,14 +4,18 @@ from django.db import migrations, models
 
 # Nombres fijos aquí a propósito: una migración no debe cambiar si mañana cambia roles.py.
 OLD_GROUPS = ("Administradores", "Editores de contenido")
-ROLE_TO_GROUP = {
-    "ADMIN": "Administración de la iglesia",
-    "EDITOR": "Coordinación de contenido",
+# Antes del cambio, ADMIN y EDITOR tenían exactamente el mismo acceso: todo el contenido y
+# todos los mensajes. Para que nadie pierda nada el día del cambio, EDITOR recibe
+# Coordinación (contenido) más Atención y oración (mensajes). Después Administración ajusta.
+ROLE_TO_GROUPS = {
+    "ADMIN": ("Administración de la iglesia",),
+    "EDITOR": ("Coordinación de contenido", "Atención y oración"),
 }
+ROLE_TO_GROUP = {role: names[0] for role, names in ROLE_TO_GROUPS.items()}
 
 
 def roles_to_groups(apps, schema_editor):
-    """Cada cuenta conserva su acceso: ADMIN pasa a Administración y EDITOR a Coordinación.
+    """Cada cuenta conserva su acceso (ver ``ROLE_TO_GROUPS``).
 
     Los permisos de los grupos nuevos los completa ``ensure_role_groups`` al terminar
     ``migrate``; aquí solo se crean los grupos y se asignan las personas.
@@ -19,13 +23,14 @@ def roles_to_groups(apps, schema_editor):
     User = apps.get_model("accounts", "User")
     Group = apps.get_model("auth", "Group")
     groups = {
-        role: Group.objects.get_or_create(name=name)[0] for role, name in ROLE_TO_GROUP.items()
+        role: [Group.objects.get_or_create(name=name)[0] for name in names]
+        for role, names in ROLE_TO_GROUPS.items()
     }
     old = list(Group.objects.filter(name__in=OLD_GROUPS))
     for user in User.objects.filter(is_superuser=False):
-        target = groups.get(user.role)
-        if target is not None:
-            user.groups.add(target)
+        targets = groups.get(user.role, [])
+        if targets:
+            user.groups.add(*targets)
         if old:
             user.groups.remove(*old)
     Group.objects.filter(name__in=OLD_GROUPS).delete()

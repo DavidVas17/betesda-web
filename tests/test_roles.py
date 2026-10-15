@@ -523,7 +523,8 @@ def test_migration_moves_old_roles_into_the_new_groups():
     executor.migrate(executor.loader.graph.leaf_nodes())
 
     assert User.objects.get(pk=admin.pk).role_names == [CHURCH_ADMIN.name]
-    assert User.objects.get(pk=editor.pk).role_names == [COORDINATOR.name]
+    # EDITOR veía contenido y mensajes: conserva ambos accesos.
+    assert User.objects.get(pk=editor.pk).role_names == [COORDINATOR.name, CARE.name]
     assert not Group.objects.filter(name="Editores de contenido").exists()
 
 

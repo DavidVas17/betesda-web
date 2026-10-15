@@ -2,7 +2,7 @@
 <div class="p-field{% if input_type == 'checkbox' %} p-field-check{% endif %}{% if input_type == 'radio' or field.field.widget.allow_multiple_selected and input_type == 'checkbox' %} p-field-choices{% endif %}{% if key in wide_fields %} p-field-wide{% endif %}{% if field.errors %} p-field-invalid fk-invalid{% endif %}">
   {% if input_type == 'checkbox' and not field.field.widget.allow_multiple_selected %}
     <label class="p-switch" for="{{ field.id_for_label }}">{{ field }}<span class="p-switch-track" aria-hidden="true"></span><span class="p-switch-copy"><strong>{{ field.label }}</strong>{% if field.help_text %}<span id="{{ field.auto_id }}_helptext">{{ field.help_text }}</span>{% endif %}</span></label>
-  {% elif input_type == 'radio' or field.field.widget.allow_multiple_selected %}
+  {% elif input_type == 'radio' or input_type == 'checkbox' and field.field.widget.allow_multiple_selected %}
     <fieldset class="p-choice-group"><legend>{{ field.label }}{% if field.field.required %}<span class="p-required" aria-hidden="true"> *</span>{% endif %}</legend>{% if field.help_text %}<div class="p-field-help" id="{{ field.auto_id }}_helptext">{{ field.help_text }}</div>{% endif %}{{ field }}</fieldset>
   {% else %}
     <label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %}<span class="p-required" aria-hidden="true"> *</span>{% else %}<span class="p-field-optional">Opcional</span>{% endif %}</label>

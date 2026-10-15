@@ -56,3 +56,15 @@ La prueba `tests/test_roles.py::test_panel_matrix` comprueba esta tabla contra l
 Edita `apps/accounts/roles.py`, ejecuta las pruebas y despliega: `migrate` (o `setup_roles`) deja
 los grupos exactamente como dice el código. Si agregas un permiso propio nuevo, decláralo en el
 `Meta.permissions` del modelo y crea su migración.
+
+## Al actualizar desde la versión anterior
+
+La migración `accounts.0002` traslada las cuentas que ya existían sin que nadie pierda acceso:
+
+| Rol anterior | Roles nuevos |
+| --- | --- |
+| `ADMIN` (grupo "Administradores") | Administración de la iglesia |
+| `EDITOR` (grupo "Editores de contenido") | Coordinación de contenido + Atención y oración |
+
+Los grupos antiguos se eliminan. Revisa después en "Usuarios" a quién conviene quitarle
+"Atención y oración" si no debe leer las peticiones.

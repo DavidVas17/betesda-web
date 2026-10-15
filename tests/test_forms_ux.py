@@ -66,3 +66,25 @@ def test_login_form_shows_loading_state_label(client):
 
     assert 'data-loading-label="Ingresando…"' in content
     assert "data-no-counter" in content
+
+
+def test_fieldset_filter_tolerates_forms_without_blocks():
+    from django import forms
+
+    from apps.backoffice.templatetags.panel_forms import fieldset_groups
+
+    class Plain(forms.Form):
+        name = forms.CharField()
+
+    assert fieldset_groups(Plain()) == []
+
+
+def test_bulk_upload_field_has_a_real_label_and_drop_hint(admin_client):
+    from apps.gallery.models import Album
+
+    album = Album.objects.create(title="Retiro", slug="retiro")
+    content = admin_client.get(reverse("panel:album_edit", args=[album.pk])).content.decode()
+
+    assert '<label for="id_images"' in content
+    assert "p-drop-hint" in content
+    assert "p-choice-group" not in content

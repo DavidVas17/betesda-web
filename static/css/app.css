@@ -107,7 +107,7 @@ p { text-wrap: pretty; }
 /* Barra superior y encabezado -------------------------------------------- */
 .topbar { color: var(--on-dark-muted); background: var(--ink); font-size: .82rem; }
 .topbar-inner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .35rem 1.5rem; min-height: 2.5rem; padding-block: .35rem; }
-.topbar-item { display: inline-flex; align-items: center; gap: .45rem; text-decoration: none; }
+.topbar-item { display: inline-flex; align-items: center; gap: .45rem; min-height: 1.75rem; text-decoration: none; }
 .topbar-item .icon { width: .95rem; height: .95rem; color: var(--gold-light); }
 .topbar-links { display: flex; flex-wrap: wrap; gap: .35rem 1.25rem; }
 .topbar a:hover { color: var(--on-dark); }
@@ -159,6 +159,7 @@ p { text-wrap: pretty; }
 .footer-icon-link { display: inline-flex; align-items: center; justify-content: center; width: 2.75rem; height: 2.75rem; border: 1px solid var(--line-dark); border-radius: 50%; transition: border-color .2s var(--ease), background .2s var(--ease), color .2s var(--ease); }
 .site-footer .footer-icon-link:hover { border-color: var(--gold); color: var(--ink); background: var(--gold-light); }
 .footer-icon-link .icon { width: 1.2rem; height: 1.2rem; }
+.footer-bottom a { display: inline-flex; align-items: center; min-height: 1.75rem; }
 .footer-bottom { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1rem; margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--line-dark); color: var(--on-dark-muted); font-size: .8rem; }
 .site-footer :focus-visible { outline-color: var(--gold-light); }
 
