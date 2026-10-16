@@ -21,6 +21,10 @@ def public_site(request):
             ("email", "email"),
             ("address", "address"),
             ("facebook_url", "facebook_url"),
+            ("mission", "mission"),
+            ("vision", "vision"),
+            ("purpose", "purpose"),
+            ("history", "history"),
         ):
             if value := getattr(configuration, source):
                 site[destination] = value

@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import auth, content, dashboard, messages, operations
+from . import auth, content, dashboard, institution, messages, operations
 
 app_name = "panel"
 
@@ -8,6 +8,17 @@ urlpatterns = [
     path("", dashboard.dashboard, name="dashboard"),
     path("ingresar/", auth.PanelLoginView.as_view(), name="login"),
     path("salir/", auth.logout_view, name="logout"),
+    path("recuperar/", auth.PanelPasswordResetView.as_view(), name="password_reset"),
+    path(
+        "recuperar/enviado/",
+        auth.PanelPasswordResetDoneView.as_view(),
+        name="password_reset_done",
+    ),
+    path(
+        "recuperar/<uidb64>/<token>/",
+        auth.PanelPasswordResetConfirmView.as_view(),
+        name="password_reset_confirm",
+    ),
     path("eventos/", content.event_list, name="event_list"),
     path("eventos/nuevo/", content.event_create, name="event_create"),
     path("eventos/<int:pk>/editar/", content.event_edit, name="event_edit"),
@@ -34,6 +45,14 @@ urlpatterns = [
     path("mensajes/<int:pk>/accion/", messages.message_action, name="message_action"),
     path("mensajes/<int:pk>/eliminar/", messages.message_delete, name="message_delete"),
     path("configuracion/", operations.settings, name="settings"),
+    path("nuestra-iglesia/", institution.overview, name="institution"),
+    path("nuestra-iglesia/<slug:kind>/nuevo/", institution.create, name="institution_create"),
+    path("nuestra-iglesia/<slug:kind>/<int:pk>/", institution.edit, name="institution_edit"),
+    path(
+        "nuestra-iglesia/<slug:kind>/<int:pk>/eliminar/",
+        institution.delete,
+        name="institution_delete",
+    ),
     path("usuarios/", operations.user_list, name="user_list"),
     path("usuarios/nuevo/", operations.user_create, name="user_create"),
     path("usuarios/<int:pk>/editar/", operations.user_edit, name="user_edit"),

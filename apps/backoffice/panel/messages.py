@@ -65,7 +65,7 @@ def message_list(request):
             "kind_choices": (("all", "Todas las solicitudes"), *ContactMessage.Kind.choices),
             "can_change": request.user.has_perm("contacts.change_contactmessage"),
             "can_delete": request.user.has_perm("contacts.delete_contactmessage"),
-            "can_export": True,
+            "can_export": request.user.has_perm("contacts.export_contactmessage"),
             "counts": counts,
             "pagination_query": pagination_query(request),
             "export_url": reverse("panel:message_export") + "?" + request.GET.urlencode(),
@@ -127,7 +127,7 @@ def message_detail(request, pk):
     )
 
 
-@panel_required(("contacts.view_contactmessage",))
+@panel_required("contacts.change_contactmessage")
 @require_POST
 def message_action(request, pk):
     if not request.user.has_perm("contacts.change_contactmessage"):
@@ -187,7 +187,7 @@ def _csv_value(value):
     return text
 
 
-@panel_required("contacts.view_contactmessage")
+@panel_required("contacts.export_contactmessage")
 @require_GET
 def message_export(request):
     queryset, *_ = _filtered(request)

@@ -7,9 +7,10 @@
   <meta name="robots" content="noindex, nofollow">
   <title>{% block title %}{{ panel_title|default:'Panel de la iglesia' }}{% endblock %} · Betesda</title>
   {% include 'includes/favicons.html' %}
-  <link rel="stylesheet" href="{% static 'panel/css/panel.css' %}?v=warm-20261010">
+  <link rel="stylesheet" href="{% static 'panel/css/panel.css' %}?v=forms-20261011">
   {% block extra_css %}{% endblock %}
   <script src="{% static 'panel/js/panel.js' %}?v=202610-panel" defer></script>
+  <script src="{% static 'js/forms.js' %}?v=forms-20261011" defer></script>
   {% block extra_js %}{% endblock %}
 </head>
 <body class="p-app">
@@ -31,7 +32,7 @@
       <div class="p-sidebar-bottom">
         <a class="p-nav-item" href="{% url 'core:home' %}" target="_blank" rel="noopener">{% include 'panel/icon.html' with name='external' %}<span>Ver sitio de la iglesia</span></a>
         {% if request.user.is_superuser %}<a class="p-nav-item p-nav-technical" href="{% url 'admin:index' %}">{% include 'panel/icon.html' with name='settings' %}<span>Administración técnica</span></a>{% endif %}
-        <div class="p-sidebar-user"><span class="p-avatar">{{ request.user.first_name|default:request.user.username|slice:':1'|upper }}</span><div><strong>{{ request.user.get_short_name|default:request.user.username }}</strong><span>{% if request.user.is_superuser %}Administrador{% else %}Equipo Betesda{% endif %}</span></div></div>
+        <div class="p-sidebar-user"><span class="p-avatar">{{ request.user.first_name|default:request.user.username|slice:':1'|upper }}</span><div><strong>{{ request.user.get_short_name|default:request.user.username }}</strong><span>{% if request.user.is_superuser %}Superadministrador{% else %}{{ request.user.role_names|first|default:'Equipo Betesda' }}{% endif %}</span></div></div>
         <form action="{% url 'panel:logout' %}" method="post">{% csrf_token %}<button class="p-nav-item p-logout" type="submit">{% include 'panel/icon.html' with name='log-out' %}<span>Cerrar sesión</span></button></form>
       </div>
     </aside>

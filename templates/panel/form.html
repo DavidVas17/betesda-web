@@ -4,7 +4,7 @@
 <div class="p-editor-layout">
   <section class="p-card p-form-card" aria-label="{{ form_title|default:panel_title }}">
     <div class="p-card-heading"><div><h2>{{ extra_heading|default:'Información' }}</h2><p>Los campos con <span class="p-required">*</span> son obligatorios.</p></div>{% if preview_url %}<a class="p-text-link" href="{{ preview_url }}" target="_blank" rel="noopener">Ver en el sitio {% include 'panel/icon.html' with name='external' %}</a>{% endif %}</div>
-    <form method="post" enctype="multipart/form-data" class="p-form" data-editor-form>
+    <form method="post" enctype="multipart/form-data" class="p-form" data-editor-form data-enhanced-form data-dirty-guard>
       {% csrf_token %}{% if object.image %}<figure class="p-edit-photo-preview"><img src="{{ object.image.url }}" alt="{{ object.alt_text }}" width="640" height="360"><figcaption>Fotografía del álbum</figcaption></figure>{% endif %}{% include 'panel/fields.html' %}
       <div class="p-form-actions">{% if can_save != False %}<button class="p-button p-button-primary" type="submit">{% include 'panel/icon.html' with name='check' %}{{ submit_label|default:'Guardar cambios' }}</button>{% endif %}{% if cancel_url %}<a class="p-button p-button-secondary" href="{{ cancel_url }}">{% if can_save == False %}Volver al listado{% else %}Cancelar{% endif %}</a>{% endif %}{% if delete_url %}<a class="p-text-link p-text-danger p-action-end" href="{{ delete_url }}">{% include 'panel/icon.html' with name='trash' %}Eliminar</a>{% endif %}</div>
     </form>

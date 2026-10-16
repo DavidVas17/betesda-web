@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 from django.urls import reverse
 
+from apps.accounts.roles import CHURCH_ADMIN, COLLABORATOR
 from apps.contacts.models import ContactMessage
 from apps.core.models import SiteConfiguration
 from apps.news.models import Post
@@ -35,7 +36,29 @@ def test_superuser_creates_staff_account_without_accepting_privilege_spoofing(ad
             "is_active": "on",
             "is_superuser": "on",
             "is_staff": "",
-            "role": User.Role.ADMIN,
+            "roles": ["Rol inventado"],
+            "groups": ["1"],
+            "user_permissions": ["1"],
+        },
+    )
+
+    assert response.status_code == 200
+    assert not User.objects.filter(username="nueva-editora").exists()
+
+    response = admin_client.post(
+        reverse("panel:user_create"),
+        {
+            "username": "nueva-editora",
+            "first_name": "Ana",
+            "last_name": "Pérez",
+            "email": "ana@example.com",
+            "password1": "Betesda-Nueva-2026!",
+            "password2": "Betesda-Nueva-2026!",
+            "is_active": "on",
+            "is_superuser": "on",
+            "is_staff": "",
+            "roles": [COLLABORATOR.name],
+            "groups": ["1"],
             "user_permissions": ["1"],
         },
     )
@@ -44,7 +67,7 @@ def test_superuser_creates_staff_account_without_accepting_privilege_spoofing(ad
     user = User.objects.get(username="nueva-editora")
     assert user.is_staff is True
     assert user.is_superuser is False
-    assert user.role == User.Role.EDITOR
+    assert user.role_names == [COLLABORATOR.name]
     assert user.first_name == "Ana"
     assert user.check_password("Betesda-Nueva-2026!")
     assert user.user_permissions.count() == 0
@@ -106,7 +129,6 @@ def test_user_edit_cannot_elevate_regular_staff_to_superuser(admin_client, team_
             "is_superuser": "on",
             "is_staff": "",
             "password": "una-clave-manipulada",
-            "role": User.Role.ADMIN,
         },
     )
 
@@ -128,7 +150,7 @@ def test_own_profile_cannot_change_account_identity_or_privileges(client, team_m
             "last_name": "López",
             "email": "actualizada@example.com",
             "username": "cuenta-manipulada",
-            "role": User.Role.ADMIN,
+            "roles": [CHURCH_ADMIN.name],
             "is_superuser": "on",
             "is_staff": "",
             "is_active": "",
@@ -140,7 +162,7 @@ def test_own_profile_cannot_change_account_identity_or_privileges(client, team_m
     assert team_member.first_name == "María actualizada"
     assert team_member.email == "actualizada@example.com"
     assert team_member.username == "equipo-iglesia"
-    assert team_member.role == User.Role.EDITOR
+    assert team_member.role_names == []
     assert team_member.is_superuser is False
     assert team_member.is_staff is True
     assert team_member.is_active is True

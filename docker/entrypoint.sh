@@ -28,6 +28,13 @@ if [ "${RUN_SETUP_ROLES:-true}" = "true" ]; then
   python manage.py setup_roles
 fi
 
+if [ "${RUN_IMAGE_VARIANTS:-true}" = "true" ]; then
+  # Solo crea las versiones WebP que falten; las existentes no se tocan.
+  python manage.py generate_image_variants
+  # Quita GPS y otros metadatos de las fotos subidas antes de esta protección.
+  python manage.py strip_image_metadata
+fi
+
 if [ "${COLLECT_STATIC:-false}" = "true" ]; then
   python manage.py collectstatic --noinput
 fi

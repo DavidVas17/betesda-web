@@ -23,3 +23,5 @@ SECURE_HSTS_SECONDS = env.int("SECURE_HSTS_SECONDS", default=31_536_000)
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 
+# Caddy está delante de Django y escribe la IP real del visitante en X-Forwarded-For.
+TRUST_X_FORWARDED_FOR = env.bool("DJANGO_TRUST_X_FORWARDED_FOR", default=True)

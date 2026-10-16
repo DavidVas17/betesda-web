@@ -3,11 +3,14 @@ from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 
+from apps.core.images import ImageVariantsMixin
 from apps.core.models import TimeStampedModel
 from apps.core.utils import unique_slug
 
 
-class Post(TimeStampedModel):
+class Post(ImageVariantsMixin, TimeStampedModel):
+    image_variants = {"cover_image": (("cover_card", 960), ("cover_large", 1600))}
+
     class Status(models.TextChoices):
         DRAFT = "DRAFT", "Borrador"
         PUBLISHED = "PUBLISHED", "Publicado"
@@ -18,6 +21,12 @@ class Post(TimeStampedModel):
     excerpt = models.CharField("extracto", max_length=280)
     body = models.TextField("contenido")
     cover_image = models.ImageField("imagen", upload_to="news/%Y/%m/", blank=True)
+    cover_card = models.ImageField(
+        "imagen para tarjetas", upload_to="news/%Y/%m/web/", blank=True, editable=False
+    )
+    cover_large = models.ImageField(
+        "imagen grande", upload_to="news/%Y/%m/web/", blank=True, editable=False
+    )
     status = models.CharField(
         "estado", max_length=12, choices=Status.choices, default=Status.DRAFT, db_index=True
     )
@@ -37,6 +46,7 @@ class Post(TimeStampedModel):
         indexes = [models.Index(fields=("status", "published_at"), name="news_status_date_idx")]
         verbose_name = "noticia o anuncio"
         verbose_name_plural = "noticias y anuncios"
+        permissions = [("publish_post", "Puede publicar, archivar y destacar noticias")]
 
     def __str__(self) -> str:
         return self.title
@@ -47,6 +57,14 @@ class Post(TimeStampedModel):
         if self.status == self.Status.PUBLISHED and self.published_at is None:
             self.published_at = timezone.now()
         super().save(*args, **kwargs)
+
+    @property
+    def card_image_url(self) -> str:
+        return self.best_url(self.cover_card, self.cover_image)
+
+    @property
+    def large_image_url(self) -> str:
+        return self.best_url(self.cover_large, self.cover_image)
 
     def get_absolute_url(self) -> str:
         return reverse("news:detail", kwargs={"slug": self.slug})

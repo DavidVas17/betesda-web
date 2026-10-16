@@ -21,7 +21,8 @@ Nombres recomendados:
 
 ## Proteccion de `main`
 
-Configurar en GitHub:
+El dueño del repositorio la activa en GitHub: Settings › Branches › Add branch ruleset
+(o Branch protection rule) para `main`, con estas reglas:
 
 - prohibir push directo y eliminacion;
 - exigir pull request y una aprobacion;

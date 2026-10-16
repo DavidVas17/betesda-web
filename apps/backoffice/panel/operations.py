@@ -10,14 +10,47 @@ from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.views.decorators.http import require_GET, require_http_methods
 
+from apps.accounts.alerts import alert_account_created, alert_password_changed
+from apps.accounts.roles import PRIVILEGED_ROLE_NAMES, ROLE_NAMES
+from apps.contacts.models import ContactMessage
 from apps.core.content import INSTITUTION
 from apps.core.models import SiteConfiguration
 
-from .access import panel_required, require_superuser
+from .access import panel_required
 from .forms import SiteSettingsForm, TeamUserCreateForm, TeamUserEditForm
 from .utils import audit, paginate, pagination_query, panel_render
 
 User = get_user_model()
+TEAM_PERMISSION = "accounts.manage_team"
+
+
+def _role_names(member) -> list[str]:
+    # Usa los grupos ya precargados con prefetch_related para no consultar por fila.
+    names = {group.name for group in member.groups.all()}
+    return [name for name in ROLE_NAMES if name in names]
+
+
+def can_manage_member(actor, member) -> bool:
+    """El superusuario gestiona a todos; Administración no gestiona a sus pares.
+
+    Así una persona con Administración de la iglesia no puede quitarle el acceso,
+    cambiarle la contraseña ni borrar a otra con su mismo nivel. Su propia cuenta la
+    edita con roles y estado bloqueados (ver ``TeamRolesMixin``).
+    """
+    if member.is_superuser:
+        return False
+    if actor.is_superuser or member.pk == actor.pk:
+        return True
+    return not (set(_role_names(member)) & PRIVILEGED_ROLE_NAMES)
+
+
+def _team_member(request, pk, *, allow_self=True):
+    member = get_object_or_404(User.objects.prefetch_related("groups"), pk=pk)
+    if not can_manage_member(request.user, member):
+        raise PermissionDenied
+    if not allow_self and member.pk == request.user.pk:
+        raise PermissionDenied
+    return member
 
 
 @panel_required(
@@ -32,7 +65,18 @@ def settings(request):
         "institution_name": INSTITUTION["name"],
         **{
             key: INSTITUTION[key]
-            for key in ("slogan", "phone", "email", "address", "facebook_url", "map_url")
+            for key in (
+                "slogan",
+                "phone",
+                "email",
+                "address",
+                "facebook_url",
+                "map_url",
+                "mission",
+                "vision",
+                "purpose",
+                "history",
+            )
         },
     }
     if request.method == "POST" and not can_save:
@@ -88,12 +132,15 @@ def settings(request):
     )
 
 
-@panel_required()
+@panel_required(TEAM_PERMISSION)
 @require_GET
 def user_list(request):
-    require_superuser(request)
     query = request.GET.get("q", "").strip()[:200]
-    users = User.objects.filter(is_superuser=False).order_by("-is_active", "username", "pk")
+    users = (
+        User.objects.filter(is_superuser=False)
+        .prefetch_related("groups")
+        .order_by("-is_active", "username", "pk")
+    )
     if query:
         users = users.filter(
             Q(username__icontains=query)
@@ -101,11 +148,15 @@ def user_list(request):
             | Q(last_name__icontains=query)
             | Q(email__icontains=query)
         )
+    page_obj = paginate(request, users, 15)
+    for member in page_obj:
+        member.roles_label = ", ".join(_role_names(member)) or "Sin roles"
+        member.can_manage = can_manage_member(request.user, member)
     return panel_render(
         request,
         "panel/users.html",
         {
-            "page_obj": paginate(request, users, 15),
+            "page_obj": page_obj,
             "query": query,
             "create_url": reverse("panel:user_create"),
             "can_change": True,
@@ -119,19 +170,34 @@ def user_list(request):
 
 
 def _team_form(request, pk=None):
-    require_superuser(request)
-    user = get_object_or_404(User, pk=pk, is_superuser=False) if pk is not None else None
+    user = _team_member(request, pk) if pk is not None else None
+    was_active = bool(user and user.is_active)
     form_class = TeamUserEditForm if user else TeamUserCreateForm
-    form = form_class(request.POST if request.method == "POST" else None, instance=user)
+    form = form_class(
+        request.POST if request.method == "POST" else None, instance=user, actor=request.user
+    )
     if request.method == "POST" and form.is_valid():
         with transaction.atomic():
             saved = form.save()
+            released = 0
+            if was_active and not saved.is_active:
+                # Quien ya no está en el equipo no debe quedar como responsable de nadie.
+                released = ContactMessage.objects.filter(
+                    assigned_to=saved,
+                    status__in=(ContactMessage.Status.NEW, ContactMessage.Status.IN_PROGRESS),
+                ).update(assigned_to=None)
+            roles = ", ".join(form.cleaned_data["roles"]) or "sin roles"
+            summary = "Cuenta del equipo actualizada" if user else "Cuenta del equipo creada"
             audit(
                 request,
                 saved,
                 flag=CHANGE if user else ADDITION,
-                message="Cuenta del equipo actualizada." if user else "Cuenta del equipo creada.",
+                message=f"{summary}. Roles: {roles}."
+                + (f" Solicitudes liberadas: {released}." if released else ""),
             )
+        if user is None and not set(form.cleaned_data["roles"]) & PRIVILEGED_ROLE_NAMES:
+            # Las cuentas con privilegios ya generan su propio aviso al recibir el rol.
+            alert_account_created(request.user, saved, form.cleaned_data["roles"])
         messages.success(request, "Cuenta guardada correctamente.")
         return redirect("panel:user_edit", pk=saved.pk)
     return panel_render(
@@ -141,37 +207,44 @@ def _team_form(request, pk=None):
             "form": form,
             "form_title": "Editar cuenta" if user else "Agregar persona al equipo",
             "form_intro": (
-                "Esta cuenta podrá gestionar contenido y atender solicitudes de la comunidad."
+                "Elige los roles según lo que esta persona va a manejar. Puedes combinar varios."
             ),
             "cancel_url": reverse("panel:user_list"),
             "submit_label": "Guardar cuenta",
             "can_save": True,
             "object": user,
-            "password_url": reverse("panel:user_password", args=[pk]) if user else "",
-            "delete_url": reverse("panel:user_delete", args=[pk]) if user else "",
+            "password_url": (
+                reverse("panel:user_password", args=[pk])
+                if user and user.pk != request.user.pk
+                else ""
+            ),
+            "delete_url": (
+                reverse("panel:user_delete", args=[pk])
+                if user and user.pk != request.user.pk
+                else ""
+            ),
         },
         active="users",
         title="Editar usuario" if user else "Nuevo usuario",
     )
 
 
-@panel_required()
+@panel_required(TEAM_PERMISSION)
 @require_http_methods(["GET", "POST"])
 def user_create(request):
     return _team_form(request)
 
 
-@panel_required()
+@panel_required(TEAM_PERMISSION)
 @require_http_methods(["GET", "POST"])
 def user_edit(request, pk):
     return _team_form(request, pk)
 
 
-@panel_required()
+@panel_required(TEAM_PERMISSION)
 @require_http_methods(["GET", "POST"])
 def user_delete(request, pk):
-    require_superuser(request)
-    user = get_object_or_404(User, pk=pk, is_superuser=False)
+    user = _team_member(request, pk, allow_self=False)
     if request.method == "POST":
         try:
             with transaction.atomic():
@@ -203,16 +276,17 @@ def user_delete(request, pk):
     )
 
 
-@panel_required()
+@panel_required(TEAM_PERMISSION)
 @require_http_methods(["GET", "POST"])
 def user_password(request, pk):
-    require_superuser(request)
-    user = get_object_or_404(User, pk=pk, is_superuser=False)
+    # La contraseña propia se cambia desde "Mi cuenta", pidiendo la actual.
+    user = _team_member(request, pk, allow_self=False)
     form = SetPasswordForm(user, request.POST if request.method == "POST" else None)
     if request.method == "POST" and form.is_valid():
         user = form.save(commit=False)
         user.save(update_fields=("password",))
         audit(request, user, message="Contraseña de cuenta restablecida.")
+        alert_password_changed(user, by=request.user, request=request)
         messages.success(request, "Contraseña actualizada correctamente.")
         return redirect("panel:user_edit", pk=pk)
     return panel_render(
@@ -231,10 +305,9 @@ def user_password(request, pk):
     )
 
 
-@panel_required()
+@panel_required("accounts.view_activity")
 @require_GET
 def activity(request):
-    require_superuser(request)
     query = request.GET.get("q", "").strip()[:200]
     entries = LogEntry.objects.select_related("user", "content_type").order_by(
         "-action_time", "-pk"

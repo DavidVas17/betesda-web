@@ -4,6 +4,9 @@ on:
   pull_request:
   push:
     branches: [main]
+  schedule:
+    # Cada lunes, para enterarse de vulnerabilidades nuevas aunque nadie haya hecho cambios.
+    - cron: "17 12 * * 1"
 
 permissions:
   contents: read
@@ -31,6 +34,16 @@ jobs:
       - run: uv run python manage.py makemigrations --check --dry-run
       - run: uv run coverage run -m pytest
       - run: uv run coverage report
+
+  dependencies:
+    name: Vulnerabilidades en dependencias
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      # Exactamente las versiones de uv.lock que corren en producción, con sus hashes.
+      - run: uv export --frozen --no-dev --no-emit-project --format requirements-txt > requirements-audit.txt
+      - run: uvx pip-audit --requirement requirements-audit.txt --require-hashes --disable-pip --strict
 
   container:
     runs-on: ubuntu-latest

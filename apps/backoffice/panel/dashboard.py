@@ -125,7 +125,7 @@ def dashboard(request):
             "recent_activity": LogEntry.objects.select_related("user", "content_type").order_by(
                 "-action_time", "-pk"
             )[:5]
-            if user.is_superuser
+            if user.has_perm("accounts.view_activity")
             else [],
             "greeting": f"Hola, {user.first_name or user.username}",
             "today": timezone.localdate(),

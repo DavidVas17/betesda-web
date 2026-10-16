@@ -91,7 +91,7 @@ def test_public_submission_is_received_in_new_panel_and_uses_existing_database(
     response = admin_client.get(reverse("admin:contacts_contactmessage_change", args=[message.pk]))
     assert response.context["original"].pk == message.pk
     assert response.context["original"].status == ContactMessage.Status.CLOSED
-    assert admin_client.get(reverse("admin:index")).context["bo_new_messages"] == 0
+    assert admin_client.get(reverse("panel:dashboard")).context["panel_new_messages"] == 0
 
 
 def test_reader_can_review_messages_but_cannot_mutate_them(
@@ -103,7 +103,8 @@ def test_reader_can_review_messages_but_cannot_mutate_them(
 
     assert client.get(reverse("panel:message_list")).status_code == 200
     assert client.get(detail).status_code == 200
-    assert client.get(reverse("panel:message_export")).status_code == 200
+    # Ver una petición de oración no autoriza a sacar todas en un archivo.
+    assert client.get(reverse("panel:message_export")).status_code == 403
     assert (
         client.post(detail, {"status": "CLOSED", "internal_notes": "Manipulada"}).status_code == 403
     )

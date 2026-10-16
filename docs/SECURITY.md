@@ -10,7 +10,57 @@
 - mensajes de error sin detalles tecnicos en producción;
 - comprobaciones de disponibilidad separadas;
 - secretos exclusivamente mediante variables de entorno;
-- deteccion de llaves privadas antes del commit.
+- deteccion de llaves privadas antes del commit;
+- `.env` excluido de Git: cada ambiente crea el suyo desde `.env.example`;
+- administración técnica (`DJANGO_ADMIN_URL`) solo para el superusuario;
+- límite de mensajes por visitante en el formulario público (`CONTACT_RATE_LIMIT_*`);
+- IP real del visitante detrás de Caddy (`DJANGO_TRUST_X_FORWARDED_FOR`);
+- freno a quien prueba contraseñas en el panel y en la administración técnica: 5 fallos por
+  usuario e IP, o 20 por IP, bloquean 15 minutos (`LOGIN_RATE_LIMIT_*`). El bloqueo es por
+  usuario **e** IP, así nadie puede dejar fuera a otra persona desde su conexión. El
+  superusuario puede desbloquear a alguien borrando sus "intentos fallidos de ingreso" en la
+  administración técnica;
+- recuperación de contraseña por correo solo para cuentas activas del equipo, con enlace de un
+  solo uso que vence a las 2 horas (`PASSWORD_RESET_TIMEOUT`) y el mismo freno de intentos. La
+  respuesta es idéntica exista o no la cuenta;
+- política de contenido (CSP) estricta: solo scripts, estilos, fuentes e imágenes del propio
+  sitio, sin código en línea; la única excepción es el mapa de Google. Las plantillas nunca
+  deben llevar `<script>` sin `src`, `style="…"` ni `onclick`; una prueba lo vigila. Para
+  probar un cambio sin bloquear, `DJANGO_CSP_REPORT_ONLY=true` (es lo predeterminado en
+  desarrollo);
+- `Permissions-Policy` que apaga cámara, micrófono, ubicación, pagos y USB;
+- los archivos subidos se sirven con una CSP que impide ejecutarlos como página;
+- las fotos se guardan sin metadatos: al subirlas se quita el EXIF (ubicación GPS, fecha,
+  modelo del teléfono) y se aplica la orientación. `strip_image_metadata` limpia las que se
+  subieron antes; corre en cada despliegue y no toca las que ya están limpias;
+- la sesión del panel se cierra tras 8 horas sin actividad (`PANEL_SESSION_HOURS`);
+- avisos de seguridad por correo (`apps/accounts/alerts.py`), sin contraseñas ni contenido
+  de mensajes:
+
+  | Evento | Quién recibe el aviso |
+  | --- | --- |
+  | Ingreso bloqueado por intentos fallidos | la persona dueña de la cuenta y quienes administran |
+  | Muchos usuarios probados desde una conexión | quienes administran |
+  | Inicio de sesión desde un navegador nuevo | la persona (el primer ingreso no avisa) |
+  | Contraseña cambiada | la persona |
+  | Cuenta nueva en el panel | quienes administran, menos quien la creó |
+  | Rol de Administración de la iglesia o superusuario otorgado | la persona y quienes administran |
+
+  "Quienes administran" son los superusuarios, Administración de la iglesia y los correos de
+  `SECURITY_ALERT_EMAILS`. El navegador se reconoce con una cookie aleatoria; en la base solo
+  se guarda su huella, y los que no se usan en un año se olvidan;
+- vulnerabilidades en dependencias: el CI corre `pip-audit` sobre las versiones exactas de
+  `uv.lock` en cada PR y cada lunes, y Dependabot abre PRs con las actualizaciones de Python,
+  Docker y GitHub Actions. Un PR de seguridad de Dependabot se revisa y se mezcla primero.
+
+## Si un secreto llegó a Git
+
+Borrar el archivo del repositorio no basta: queda en el historial. Hay que cambiar el secreto.
+
+1. Generar una `DJANGO_SECRET_KEY` nueva y reemplazarla en el `.env` del servidor.
+2. Cambiar la contraseña del superusuario (`make admin` con el nuevo valor en `.env`).
+3. Cambiar `POSTGRES_PASSWORD` y `DATABASE_URL` si el archivo expuesto los tenía.
+4. Reiniciar los servicios y cerrar sesiones abiertas.
 
 ## Reglas de administración
 
@@ -22,7 +72,25 @@
 
 ## Datos personales
 
-Los formularios deben solicitar solo datos necesarios y mostrar un aviso de privacidad. Los mensajes de contacto no deben aparecer en logs, correos de prueba ni datos de demostracion. Definir con la institución un periodo de retención antes de publicar el formulario.
+Los formularios deben solicitar solo datos necesarios y mostrar un aviso de privacidad. Los mensajes de contacto no deben aparecer en logs, correos de prueba ni datos de demostracion.
+
+### Plazo de conservación
+
+Las peticiones de oración pueden contener datos muy sensibles, así que no se guardan para
+siempre (`apps/contacts/retention.py`):
+
+| Qué | Se elimina | Variable |
+| --- | --- | --- |
+| Mensajes **cerrados** | 365 días después de su último cambio | `MESSAGE_RETENTION_DAYS` |
+| Mensajes **no deseados** | 30 días después | `SPAM_RETENTION_DAYS` |
+| **IP** de cada envío | a los 90 días (el mensaje se conserva) | `IP_RETENTION_DAYS` |
+| Intentos fallidos de ingreso | al día siguiente | — |
+
+Los mensajes nuevos o en seguimiento nunca se eliminan solos. La página de contacto avisa del
+plazo y el detalle de cada solicitud cerrada muestra la fecha en que se eliminará. Confirmar los
+plazos con la iglesia antes de publicar. En producción el servicio `maintenance` corre la
+limpieza cada día; a mano: `make purge ARGS=--dry-run` para ver qué se borraría y `make purge`
+para hacerlo.
 
 ## Reporte de vulnerabilidades
 
