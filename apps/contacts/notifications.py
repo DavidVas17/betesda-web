@@ -19,7 +19,8 @@ logger = logging.getLogger(__name__)
 
 
 def recipients() -> list[str]:
-    """Correos de quienes pueden leer mensajes y no apagaron los avisos."""
+    """Correos de quienes pueden leer mensajes y no apagaron los avisos, más el buzón de la
+    iglesia (``CONTACT_NOTIFY_EMAILS``), que siempre recibe el aviso."""
     readers = Permission.objects.filter(
         content_type__app_label="contacts", codename="view_contactmessage"
     )
@@ -34,7 +35,8 @@ def recipients() -> list[str]:
         )
         .distinct()
     )
-    return sorted({user.email for user in users})
+    shared = {email.strip() for email in settings.CONTACT_NOTIFY_EMAILS if email.strip()}
+    return sorted({user.email for user in users} | shared)
 
 
 def notify_team(message: ContactMessage, request) -> int:

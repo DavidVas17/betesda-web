@@ -114,3 +114,27 @@ def test_the_option_is_hidden_for_roles_that_do_not_read_messages(client):
     client.force_login(member("fotos", GALLERY))
 
     assert "Avisarme por correo" not in client.get(reverse("panel:account")).content.decode()
+
+
+def test_church_inbox_always_gets_the_notice(
+    client, settings, mailoutbox, django_capture_on_commit_callbacks
+):
+    settings.CONTACT_NOTIFY_EMAILS = ["iglesia@example.com", " "]
+    member("pastor", CHURCH_ADMIN)
+
+    with django_capture_on_commit_callbacks(execute=True):
+        send(client)
+
+    assert sorted(mailoutbox[0].bcc) == ["iglesia@example.com", "pastor@example.com"]
+    assert PRIVATE_TEXT not in mailoutbox[0].body
+
+
+def test_church_inbox_works_even_without_team_accounts(
+    client, settings, mailoutbox, django_capture_on_commit_callbacks
+):
+    settings.CONTACT_NOTIFY_EMAILS = ["iglesia@example.com"]
+
+    with django_capture_on_commit_callbacks(execute=True):
+        send(client)
+
+    assert mailoutbox[0].bcc == ["iglesia@example.com"]

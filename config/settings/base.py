@@ -132,6 +132,9 @@ DEFAULT_FROM_EMAIL = env.str(
     "DEFAULT_FROM_EMAIL", default="Betesda Rosa de Sarón <no-responder@localhost>"
 )
 EMAIL_TIMEOUT = env.int("EMAIL_TIMEOUT", default=10)
+# Buzón de la iglesia que recibe siempre el aviso de cada petición o mensaje nuevo, además
+# del equipo que atiende mensajes. Separados por coma.
+CONTACT_NOTIFY_EMAILS = env.list("CONTACT_NOTIFY_EMAILS", default=[])
 # Correos extra que reciben los avisos de seguridad (bloqueos, cuentas nuevas, privilegios),
 # además del superusuario y Administración de la iglesia. Separados por coma.
 SECURITY_ALERT_EMAILS = env.list("SECURITY_ALERT_EMAILS", default=[])

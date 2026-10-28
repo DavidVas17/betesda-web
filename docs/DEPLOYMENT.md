@@ -35,7 +35,8 @@ DJANGO_ADMIN_URL=una-ruta-propia/
 
 Cuando entra una petición de oración o un mensaje, el sitio avisa por correo a quienes
 pueden leer mensajes (Atención y oración, Administración de la iglesia) y no apagaron el
-aviso en "Mi cuenta". El correo no incluye el contenido: solo enlaza al panel.
+aviso en "Mi cuenta", y al buzón de la iglesia definido en `CONTACT_NOTIFY_EMAILS`. El correo
+no incluye el contenido: solo enlaza al panel.
 
 ```dotenv
 EMAIL_URL=smtp+tls://usuario:clave-de-aplicacion@smtp.gmail.com:587
