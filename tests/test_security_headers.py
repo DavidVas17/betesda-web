@@ -53,6 +53,8 @@ def test_templates_have_no_inline_code_that_the_policy_would_block():
     """Si alguien agrega un <script> o un style="" en línea, el navegador lo bloquearía."""
     offenders = []
     for path in TEMPLATES.rglob("*.html"):
+        if "emails" in path.parts:
+            continue  # los correos no son páginas: los clientes de correo exigen estilos en línea
         text = path.read_text(encoding="utf-8")
         for script in re.findall(r"<script\b[^>]*>", text):
             if "src=" not in script and "application/json" not in script:

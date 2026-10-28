@@ -42,7 +42,7 @@ class PanelPasswordResetView(auth_views.PasswordResetView):
     form_class = PanelPasswordResetForm
     template_name = "panel/password_reset.html"
     subject_template_name = "panel/email/password_reset_subject.txt"
-    email_template_name = "panel/email/password_reset_body.txt"
+    # El cuerpo lo arma PanelPasswordResetForm.send_mail con el diseño de los correos.
     success_url = reverse_lazy("panel:password_reset_done")
     extra_email_context = {"timeout_hours": _timeout_hours()}
 

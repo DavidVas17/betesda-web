@@ -1,3 +1,4 @@
+import logging
 from urllib.parse import urlsplit
 
 from django import forms
@@ -10,6 +11,8 @@ from django.contrib.auth.forms import (
 )
 from django.contrib.auth.models import Permission
 from django.db.models import Q
+from django.template.loader import render_to_string
+from django.urls import reverse
 
 from apps.accounts.roles import (
     PRIVILEGED_ROLE_NAMES,
@@ -25,6 +28,7 @@ from apps.accounts.throttle import (
     seconds_until_allowed,
 )
 from apps.contacts.models import ContactMessage
+from apps.core.emails import Email
 from apps.core.models import SiteConfiguration
 from apps.core.network import client_ip
 
@@ -32,6 +36,8 @@ from .content_forms import choice_label
 from .form_layout import FieldsetsMixin
 
 User = get_user_model()
+
+logger = logging.getLogger(__name__)
 
 
 class PanelAuthenticationForm(ThrottledLoginMixin, AuthenticationForm):
@@ -85,6 +91,43 @@ class PanelPasswordResetForm(PasswordResetForm):
 
     def get_users(self, email):
         return (user for user in super().get_users(email) if user.is_staff)
+
+    def send_mail(self, subject_template_name, email_template_name, context, *args, **kwargs):
+        """El enlace sale con el diseño de los correos del sitio (HTML y texto)."""
+        user = context["user"]
+        link = (
+            context["protocol"]
+            + "://"
+            + context["domain"]
+            + reverse(
+                "panel:password_reset_confirm",
+                kwargs={"uidb64": context["uid"], "token": context["token"]},
+            )
+        )
+        hours = context.get("timeout_hours", 2)
+        email = Email(
+            subject="".join(render_to_string(subject_template_name, context).splitlines()),
+            eyebrow="Panel de la iglesia",
+            title="Restablece tu contraseña",
+            preheader="Usa este enlace para elegir una contraseña nueva.",
+            paragraphs=[
+                f"Hola {user.get_short_name() or user.get_username()}:",
+                "Alguien pidió restablecer la contraseña de tu cuenta del panel de Betesda "
+                "Rosa de Sarón. Si fuiste tú, usa el botón para elegir una contraseña nueva.",
+            ],
+            details=[
+                ("Tu usuario", user.get_username()),
+                ("El enlace vence en", f"{hours} hora{'s' if hours != 1 else ''}"),
+            ],
+            button=("Elegir contraseña nueva", link),
+            note="Si no lo pediste, ignora este correo: tu contraseña no cambia. El enlace "
+            "funciona una sola vez.",
+            footer="Por seguridad, nunca te pediremos tu contraseña por correo.",
+        )
+        try:
+            email.message(to=[user.email]).send()
+        except Exception:  # noqa: BLE001 - igual que Django: se registra y no se revela
+            logger.exception("No se pudo enviar el correo de recuperación a %s", user.pk)
 
 
 class PanelSetPasswordForm(SetPasswordForm):

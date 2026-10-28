@@ -19,13 +19,12 @@ import secrets
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
-from django.core.mail import EmailMessage
 from django.db import transaction
 from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.formats import date_format
 
+from apps.core.emails import Email, now_label
 from apps.core.network import client_ip
 
 logger = logging.getLogger("apps.accounts.security")
@@ -59,24 +58,24 @@ def admin_recipients(exclude=None) -> list[str]:
     return sorted(email for email in emails if email)
 
 
-def send_alert(subject: str, body: str, *, to=(), bcc=()) -> None:
+def send_alert(email: Email, *, to=(), bcc=()) -> None:
     """Envía el aviso cuando termina la transacción en curso (o de inmediato si no hay)."""
     to, bcc = [e for e in to if e], [e for e in bcc if e and e not in to]
     if not (to or bcc):
         return
+    email.subject = f"[Betesda · Seguridad] {email.subject}"
+    email.eyebrow = "Seguridad del panel"
+    email.tone = "alert"
+    email.footer = email.footer or (
+        "Aviso automático del panel de Betesda Rosa de Sarón. Por seguridad, nunca te "
+        "pediremos tu contraseña por correo."
+    )
 
     def deliver():
-        message = EmailMessage(
-            subject=f"[Betesda · Seguridad] {subject}",
-            body=body + "\n—\nAviso automático del panel de Betesda Rosa de Sarón.\n",
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            to=to,
-            bcc=bcc,
-        )
         try:
-            message.send()
+            email.message(to=to, bcc=bcc).send()
         except Exception:  # noqa: BLE001 - el aviso nunca debe romper la acción
-            logger.exception("No se pudo enviar el aviso de seguridad: %s", subject)
+            logger.exception("No se pudo enviar el aviso de seguridad: %s", email.subject)
 
     transaction.on_commit(deliver)
 
@@ -85,10 +84,6 @@ def absolute_url(path: str, request=None) -> str:
     if request is not None:
         return request.build_absolute_uri(path)
     return settings.SITE_URL.rstrip("/") + path if settings.SITE_URL else path
-
-
-def _now() -> str:
-    return date_format(timezone.localtime(), "j \\d\\e F \\d\\e Y, H:i")
 
 
 # --- Dispositivo ----------------------------------------------------------------------------
@@ -145,16 +140,28 @@ def remember_device(request, user) -> None:
     KnownDevice.objects.create(user=user, key=hash_device_token(token), label=label, ip_address=ip)
     request.device_cookie = token
     if not first_login and user.email:
-        password_url = absolute_url(reverse("panel:password_reset"), request)
         send_alert(
-            "Nuevo inicio de sesión en tu cuenta",
-            f"Hola {user.get_short_name() or user.get_username()}:\n\n"
-            f"Se inició sesión en tu cuenta del panel desde un dispositivo que no "
-            f"habíamos visto.\n\n"
-            f"Dispositivo: {label}\nIP: {ip or 'desconocida'}\nFecha: {_now()}\n\n"
-            f"Si fuiste tú, no tienes que hacer nada.\n"
-            f"Si no fuiste tú, cambia tu contraseña de inmediato:\n{password_url}\n"
-            f"y avisa al administrador de la iglesia.\n",
+            Email(
+                subject="Nuevo inicio de sesión en tu cuenta",
+                title="Nuevo inicio de sesión",
+                preheader=f"Se inició sesión en tu cuenta desde {label}.",
+                paragraphs=[
+                    f"Hola {_name(user)}:",
+                    "Se inició sesión en tu cuenta del panel desde un dispositivo que no "
+                    "habíamos visto. Si fuiste tú, no tienes que hacer nada.",
+                ],
+                details=[
+                    ("Dispositivo", label),
+                    ("IP", ip or "desconocida"),
+                    ("Fecha", now_label()),
+                ],
+                button=(
+                    "No fui yo: cambiar contraseña",
+                    absolute_url(reverse("panel:password_reset"), request),
+                ),
+                note="Si no reconoces este ingreso, cambia tu contraseña de inmediato y avisa "
+                "al administrador de la iglesia.",
+            ),
             to=[user.email],
         )
 
@@ -183,16 +190,28 @@ class DeviceCookieMiddleware:
 # --- Bloqueos, cuentas y privilegios ---------------------------------------------------------
 
 
+def _name(user) -> str:
+    return user.get_short_name() or user.get_full_name() or user.get_username()
+
+
 def alert_login_locked(username: str, ip: str | None, *, by_ip: bool, request=None) -> None:
     window = max(1, settings.LOGIN_RATE_LIMIT[2] // 60)
-    where = f"IP: {ip or 'desconocida'}\nFecha: {_now()}\n"
     if by_ip:
         send_alert(
-            "Ingreso bloqueado por muchos intentos desde una conexión",
-            "Se bloqueó temporalmente una conexión que probó contraseñas con varios "
-            f"usuarios distintos.\n\n{where}Último usuario probado: {username or '—'}\n\n"
-            f"El bloqueo dura {window} minutos. Si se repite, conviene revisar la "
-            "bitácora y bloquear esa IP en el servidor.\n",
+            Email(
+                subject="Ingreso bloqueado por muchos intentos desde una conexión",
+                title="Conexión bloqueada temporalmente",
+                paragraphs=[
+                    "Una conexión probó contraseñas con varios usuarios distintos y la "
+                    f"bloqueamos durante {window} minutos.",
+                ],
+                details=[
+                    ("IP", ip or "desconocida"),
+                    ("Último usuario probado", username or "—"),
+                    ("Fecha", now_label()),
+                ],
+                note="Si se repite, conviene revisar la bitácora y bloquear esa IP en el servidor.",
+            ),
             bcc=admin_recipients(),
         )
         return
@@ -206,15 +225,27 @@ def alert_login_locked(username: str, ip: str | None, *, by_ip: bool, request=No
         # Usuario inexistente: no se avisa a nadie por correo (sería ruido); queda en el log.
         logger.warning("Bloqueo de ingreso para usuario inexistente %s desde %s", username, ip)
         return
-    reset_url = absolute_url(reverse("panel:password_reset"), request)
     send_alert(
-        "Varios intentos fallidos de ingreso en tu cuenta",
-        f"Hola {user.get_short_name() or user.get_username()}:\n\n"
-        f"Alguien escribió mal la contraseña de tu cuenta varias veces seguidas, así que "
-        f"bloqueamos el ingreso desde esa conexión por {window} minutos.\n\n{where}\n"
-        f"Si fuiste tú, espera y vuelve a intentar, o recupera tu contraseña:\n{reset_url}\n"
-        f"Si no fuiste tú, tu contraseña sigue a salvo; considera cambiarla por una más "
-        f"larga.\n",
+        Email(
+            subject="Varios intentos fallidos de ingreso en tu cuenta",
+            title="Intentos fallidos en tu cuenta",
+            paragraphs=[
+                f"Hola {_name(user)}:",
+                "Alguien escribió mal la contraseña de tu cuenta varias veces seguidas, así "
+                f"que bloqueamos el ingreso desde esa conexión durante {window} minutos.",
+            ],
+            details=[
+                ("Cuenta", user.get_username()),
+                ("IP", ip or "desconocida"),
+                ("Fecha", now_label()),
+            ],
+            button=(
+                "Recuperar mi contraseña",
+                absolute_url(reverse("panel:password_reset"), request),
+            ),
+            note="Si no fuiste tú, tu contraseña sigue a salvo: nadie entró. Aun así, "
+            "considera cambiarla por una más larga.",
+        ),
         to=[user.email],
         bcc=admin_recipients(exclude=user),
     )
@@ -222,22 +253,39 @@ def alert_login_locked(username: str, ip: str | None, *, by_ip: bool, request=No
 
 def alert_account_created(actor, user, roles) -> None:
     send_alert(
-        "Se creó una cuenta en el panel",
-        f"{actor.get_full_name() or actor.get_username()} creó la cuenta "
-        f"«{user.get_username()}».\n\nRoles: {', '.join(roles) or 'sin roles'}\n"
-        f"Fecha: {_now()}\n\n"
-        f"Si no esperabas este cambio, revisa la sección Usuarios del panel:\n"
-        f"{absolute_url(reverse('panel:user_list'))}\n",
+        Email(
+            subject="Se creó una cuenta en el panel",
+            title="Nueva cuenta en el panel",
+            paragraphs=[
+                f"{actor.get_full_name() or actor.get_username()} creó una cuenta nueva "
+                "para el equipo.",
+            ],
+            details=[
+                ("Cuenta", user.get_username()),
+                ("Roles", ", ".join(roles) or "sin roles"),
+                ("Creada por", actor.get_username()),
+                ("Fecha", now_label()),
+            ],
+            button=("Revisar usuarios", absolute_url(reverse("panel:user_list"))),
+            note="Si no esperabas este cambio, revísalo en la sección Usuarios del panel.",
+        ),
         bcc=admin_recipients(exclude=actor),
     )
 
 
 def alert_privilege_granted(user, privilege: str) -> None:
     send_alert(
-        "Se otorgaron privilegios de administración",
-        f"La cuenta «{user.get_username()}» recibió: {privilege}.\nFecha: {_now()}\n\n"
-        f"Con esto puede gestionar al equipo. Si no reconoces el cambio, revísalo de "
-        f"inmediato en el panel o en la administración técnica.\n",
+        Email(
+            subject="Se otorgaron privilegios de administración",
+            title="Nuevos privilegios de administración",
+            paragraphs=[
+                f"La cuenta «{user.get_username()}» recibió {privilege}. Con esto puede "
+                "gestionar al equipo.",
+            ],
+            details=[("Cuenta", user.get_username()), ("Fecha", now_label())],
+            note="Si no reconoces este cambio, revísalo de inmediato en el panel o en la "
+            "administración técnica.",
+        ),
         to=[user.email] if user.email else [],
         bcc=admin_recipients(exclude=user),
     )
@@ -250,13 +298,19 @@ def alert_password_changed(user, *, by=None, request=None) -> None:
     who = (
         f"{by.get_full_name() or by.get_username()} (administración del equipo)"
         if by is not None and by.pk != user.pk
-        else "tú mismo, desde tu cuenta o con el enlace de recuperación"
+        else "Tú, desde tu cuenta o con el enlace de recuperación"
     )
     send_alert(
-        "Tu contraseña cambió",
-        f"Hola {user.get_short_name() or user.get_username()}:\n\n"
-        f"La contraseña de tu cuenta del panel cambió.\n\nQuién: {who}\nFecha: {_now()}\n"
-        f"IP: {(client_ip(request) if request else None) or 'desconocida'}\n\n"
-        f"Si no reconoces este cambio, avisa de inmediato al administrador de la iglesia.\n",
+        Email(
+            subject="Tu contraseña cambió",
+            title="Tu contraseña cambió",
+            paragraphs=[f"Hola {_name(user)}:", "La contraseña de tu cuenta del panel cambió."],
+            details=[
+                ("Quién", who),
+                ("IP", (client_ip(request) if request else None) or "desconocida"),
+                ("Fecha", now_label()),
+            ],
+            note="Si no reconoces este cambio, avisa de inmediato al administrador de la iglesia.",
+        ),
         to=[user.email],
     )

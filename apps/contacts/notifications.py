@@ -9,9 +9,10 @@ import logging
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
-from django.core.mail import EmailMessage
 from django.db.models import Q
 from django.urls import reverse
+
+from apps.core.emails import Email, now_label
 
 from .models import ContactMessage
 
@@ -49,21 +50,27 @@ def notify_team(message: ContactMessage, request) -> int:
     subject = "Nueva petición de oración" if is_prayer else "Nuevo mensaje de contacto"
     detail_url = request.build_absolute_uri(reverse("panel:message_detail", args=[message.pk]))
     account_url = request.build_absolute_uri(reverse("panel:account"))
-    body = (
-        f"Hola:\n\n"
-        f"Recibimos {what} en el sitio de la iglesia (solicitud #{message.pk}).\n\n"
-        f"Ábrela en el panel para leerla y darle seguimiento:\n{detail_url}\n\n"
-        f"Por privacidad, este correo no incluye el contenido ni los datos de la persona.\n\n"
-        f"—\nRecibes este aviso porque atiendes los mensajes del sitio. "
-        f"Puedes apagarlo en Mi cuenta: {account_url}\n"
-    )
-    email = EmailMessage(
+    email = Email(
         subject=f"[Betesda] {subject}",
-        body=body,
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        to=[],
-        bcc=emails,  # nadie ve los correos del resto del equipo
-    )
+        eyebrow="Peticiones y mensajes",
+        title=subject,
+        preheader=f"Recibimos {what}. Ábrela en el panel para darle seguimiento.",
+        paragraphs=[
+            f"Recibimos {what} en el sitio de la iglesia (solicitud #{message.pk}).",
+            "Ábrela en el panel para leerla y darle seguimiento.",
+        ],
+        details=[
+            ("Solicitud", f"#{message.pk}"),
+            ("Tipo", "Petición de oración" if is_prayer else "Mensaje de contacto"),
+            ("Recibida", now_label()),
+        ],
+        button=("Abrir en el panel", detail_url),
+        note="Por privacidad, este correo no incluye el contenido ni los datos de la persona.",
+        footer=(
+            "Recibes este aviso porque atiendes los mensajes del sitio. Si tienes cuenta en "
+            f"el panel, puedes apagarlo en Mi cuenta: {account_url}"
+        ),
+    ).message(bcc=emails)  # nadie ve los correos del resto del equipo
     try:
         email.send()
     except Exception:  # noqa: BLE001 - un fallo de correo no debe perder la petición

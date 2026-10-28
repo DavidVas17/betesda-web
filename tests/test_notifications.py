@@ -54,9 +54,12 @@ def test_team_that_reads_messages_gets_a_private_notice(
     message = ContactMessage.objects.get()
     assert reverse("panel:message_detail", args=[message.pk]) in email.body
     # El contenido y los datos de la persona nunca viajan por correo.
+    html = email.alternatives[0][0]
+    assert "Abrir en el panel" in html
     for private in (PRIVATE_TEXT, "Ana Pérez", "ana@example.com", "Salud de mi familia"):
         assert private not in email.body
         assert private not in email.subject
+        assert private not in html
 
 
 def test_contact_messages_use_their_own_subject(
