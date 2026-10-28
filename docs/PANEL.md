@@ -31,7 +31,9 @@ ejecutar migraciones para habilitarlo.
 ## Acceso y protección
 
 Solo entran cuentas activas con acceso de equipo (`is_staff`). Tras varios intentos fallidos el
-ingreso se bloquea unos minutos, y quien olvidó su contraseña la recupera desde "¿Olvidaste tu
+ingreso se bloquea unos minutos. Con la verificación en dos pasos activa, después de la
+contraseña se pide el código de la app (obligatoria para quien administra; ver
+[SECURITY.md](SECURITY.md#verificación-en-dos-pasos-2fa)), y quien olvidó su contraseña la recupera desde "¿Olvidaste tu
 contraseña?" con el correo guardado en su cuenta. Lo que cada persona puede hacer lo
 deciden sus roles, que se combinan; la matriz completa está en [ROLES.md](ROLES.md). Cada operación
 comprueba los permisos en el servidor, y ningún formulario del panel puede crear un superusuario.

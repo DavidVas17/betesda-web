@@ -52,6 +52,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "apps.backoffice.panel.security.TwoFactorEnforcementMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -89,7 +90,11 @@ DATABASES["default"].update(
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    # 10 caracteres como mínimo: una frase corta es más segura y fácil de recordar.
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {"min_length": 10},
+    },
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
@@ -100,6 +105,10 @@ LOGIN_URL = "/panel/ingresar/"
 PASSWORD_RESET_TIMEOUT = env.int("PASSWORD_RESET_TIMEOUT", default=2 * 3600)
 LOGIN_REDIRECT_URL = "/panel/"
 LOGOUT_REDIRECT_URL = "/"
+# Verificación en dos pasos obligatoria para el superusuario y Administración de la iglesia.
+TWO_FACTOR_ENFORCE = env.bool("TWO_FACTOR_ENFORCE", default=True)
+# Minutos para escribir el código después de la contraseña.
+TWO_FACTOR_PENDING_MINUTES = 5
 # La sesión del panel se cierra tras estas horas sin actividad: cada visita reinicia el
 # plazo. Protege una cuenta abierta en una computadora compartida de la iglesia.
 SESSION_COOKIE_AGE = env.int("PANEL_SESSION_HOURS", default=8) * 3600
@@ -138,6 +147,8 @@ CONTACT_NOTIFY_EMAILS = env.list("CONTACT_NOTIFY_EMAILS", default=[])
 # Correos extra que reciben los avisos de seguridad (bloqueos, cuentas nuevas, privilegios),
 # además del superusuario y Administración de la iglesia. Separados por coma.
 SECURITY_ALERT_EMAILS = env.list("SECURITY_ALERT_EMAILS", default=[])
+# Correo público para reportar vulnerabilidades (/.well-known/security.txt).
+SECURITY_CONTACT_EMAIL = env.str("SECURITY_CONTACT_EMAIL", default="")
 # Dirección pública del sitio, para los enlaces de correos enviados fuera de una visita.
 SITE_URL = env.str("SITE_URL", default="")
 
@@ -198,6 +209,22 @@ CONTACT_RATE_LIMIT = (
 MESSAGE_RETENTION_DAYS = env.int("MESSAGE_RETENTION_DAYS", default=365)
 SPAM_RETENTION_DAYS = env.int("SPAM_RETENTION_DAYS", default=30)
 IP_RETENTION_DAYS = env.int("IP_RETENTION_DAYS", default=90)
+# Trampa de tiempo del formulario: segundos mínimos para enviarlo y vigencia de la firma.
+CONTACT_TIME_TRAP = (
+    env.int("CONTACT_MIN_SECONDS", default=3),
+    env.int("CONTACT_FORM_MAX_AGE", default=2 * 3600),
+)
+# Máximo de mensajes desde un mismo correo y ventana en segundos.
+CONTACT_EMAIL_RATE_LIMIT = (
+    env.int("CONTACT_EMAIL_RATE_LIMIT_COUNT", default=3),
+    env.int("CONTACT_EMAIL_RATE_LIMIT_SECONDS", default=3600),
+)
+# Cloudflare Turnstile (opcional): verificación "no soy un robot" en el formulario.
+TURNSTILE_SITE_KEY = env.str("TURNSTILE_SITE_KEY", default="")
+TURNSTILE_SECRET_KEY = env.str("TURNSTILE_SECRET_KEY", default="")
+if TURNSTILE_SITE_KEY:
+    for _directive in ("script-src", "frame-src", "connect-src"):
+        CONTENT_SECURITY_POLICY[_directive] += ("https://challenges.cloudflare.com",)
 # Detrás de un proxy propio (Caddy en producción) la IP del visitante llega en X-Forwarded-For.
 TRUST_X_FORWARDED_FOR = env.bool("DJANGO_TRUST_X_FORWARDED_FOR", default=False)
 # Ingreso al panel y a la administración técnica: fallos permitidos por usuario e IP, por IP

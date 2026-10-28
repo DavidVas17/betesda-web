@@ -53,6 +53,51 @@
   `uv.lock` en cada PR y cada lunes, y Dependabot abre PRs con las actualizaciones de Python,
   Docker y GitHub Actions. Un PR de seguridad de Dependabot se revisa y se mezcla primero.
 
+## Verificación en dos pasos (2FA)
+
+- Con una app de códigos (Google Authenticator, Microsoft Authenticator, Authy). Se implementa
+  con TOTP (RFC 6238) en `apps/accounts/totp.py`, sin dependencias externas; el QR se dibuja en
+  el navegador con una copia local de *qrcode-generator* (MIT), así el secreto no sale del sitio.
+- **Obligatoria** para el superusuario y Administración de la iglesia (`TWO_FACTOR_ENFORCE`):
+  hasta activarla no pueden usar el panel ni el admin. **Opcional** para el resto; el tablero
+  la sugiere.
+- El admin ya no tiene formulario de ingreso propio: se entra por el panel, con el mismo freno
+  de intentos y la misma verificación.
+- La contraseña correcta no abre la sesión: queda pendiente 5 minutos hasta escribir el código.
+  Cada código sirve una sola vez; 5 códigos malos bloquean 15 minutos y avisan por correo a la
+  persona (alguien conoce su contraseña).
+- 10 códigos de respaldo de un solo uso, guardados solo como huella SHA-256. Usar uno avisa
+  por correo. Se pueden regenerar desde "Mi cuenta".
+- Desactivarla o cambiar de teléfono pide contraseña y un código.
+- Teléfono perdido: quien gestiona al equipo la restablece desde la ficha de la persona
+  ("Restablecer verificación en dos pasos"); si es el superusuario, en el servidor:
+  `python manage.py reset_two_factor <usuario>`.
+
+## Formulario de contacto: bots y spam
+
+Las defensas están en `apps/contacts/spam.py`:
+
+| Defensa | Qué hace |
+| --- | --- |
+| Campo trampa | Un campo invisible que solo llenan los bots |
+| Trampa de tiempo | Hora firmada en el formulario; enviar en menos de 3 s o sin firma = bot (`CONTACT_MIN_SECONDS`) |
+| Cloudflare Turnstile | Opcional y gratuito: `TURNSTILE_SITE_KEY` y `TURNSTILE_SECRET_KEY` |
+| Límite por IP y por correo | `CONTACT_RATE_LIMIT_*` y `CONTACT_EMAIL_RATE_LIMIT_*` |
+| Duplicados | El mismo mensaje del mismo correo en 24 h se guarda una vez |
+| Contenido | Muchos enlaces, palabras de spam u otro alfabeto → "No deseado", sin aviso al equipo |
+
+A un bot se le responde igual que a una persona, para que no aprenda a esquivar las trampas.
+Lo marcado como "No deseado" se conserva 30 días por si fue un error.
+
+## Otras protecciones
+
+- Contraseñas de 10 caracteres como mínimo, además de los validadores de Django.
+- "Mi cuenta" muestra dónde se ha ingresado y permite cerrar la sesión en los demás dispositivos.
+- `/.well-known/security.txt` (RFC 9116) con el contacto de `SECURITY_CONTACT_EMAIL`.
+- `robots.txt` excluye el panel sin mencionar la ruta del admin, y el panel responde con
+  `X-Robots-Tag: noindex`.
+- `Cross-Origin-Resource-Policy: same-origin`: otros sitios no pueden incrustar nuestros archivos.
+
 ## Si un secreto llegó a Git
 
 Borrar el archivo del repositorio no basta: queda en el historial. Hay que cambiar el secreto.

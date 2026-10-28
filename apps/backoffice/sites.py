@@ -1,11 +1,7 @@
-from django.contrib import admin
-from django.contrib.admin.forms import AdminAuthenticationForm
-
-from apps.accounts.throttle import ThrottledLoginMixin
-
-
-class ThrottledAdminAuthenticationForm(ThrottledLoginMixin, AdminAuthenticationForm):
-    """El login de la administración técnica tiene el mismo freno que el del panel."""
+from django.contrib import admin, messages
+from django.contrib.auth.views import redirect_to_login
+from django.shortcuts import redirect
+from django.urls import reverse
 
 
 class BetesdaAdminSite(admin.AdminSite):
@@ -20,7 +16,6 @@ class BetesdaAdminSite(admin.AdminSite):
     index_title = "Mantenimiento del sitio"
     site_url = "/"
     empty_value_display = "—"
-    login_form = ThrottledAdminAuthenticationForm
 
     def has_permission(self, request):
         """La administración técnica es exclusiva del superusuario.
@@ -31,3 +26,15 @@ class BetesdaAdminSite(admin.AdminSite):
         """
         user = request.user
         return bool(user.is_active and user.is_superuser)
+
+    def login(self, request, extra_context=None):
+        """Se ingresa por el panel: así el admin tiene el mismo freno de intentos y la misma
+        verificación en dos pasos, sin un segundo formulario que proteger."""
+        if request.user.is_authenticated:
+            if self.has_permission(request):
+                return redirect(request.GET.get("next") or reverse("admin:index"))
+            messages.error(request, "La administración técnica es solo para el superusuario.")
+            return redirect("panel:dashboard")
+        return redirect_to_login(
+            request.GET.get("next") or reverse("admin:index"), reverse("panel:login")
+        )

@@ -10,7 +10,9 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods, require_POST
 
-from apps.accounts.alerts import alert_password_changed
+from apps.accounts import two_factor
+from apps.accounts.alerts import alert_password_changed, current_device_key
+from apps.accounts.sessions import end_other_sessions
 
 from .access import panel_required
 from .forms import (
@@ -19,6 +21,7 @@ from .forms import (
     PanelSetPasswordForm,
     ProfileForm,
 )
+from .security import start_pending_login
 from .utils import audit, panel_render
 
 
@@ -30,6 +33,14 @@ class PanelLoginView(LoginView):
 
     def get_default_redirect_url(self):
         return reverse("panel:dashboard")
+
+    def form_valid(self, form):
+        """Con verificación en dos pasos, la contraseña correcta aún no abre la sesión."""
+        user = form.get_user()
+        if not two_factor.is_enabled(user):
+            return super().form_valid(form)
+        start_pending_login(self.request, user, self.get_success_url())
+        return redirect("panel:two_factor_verify")
 
 
 def _timeout_hours() -> int:
@@ -72,6 +83,21 @@ class PanelPasswordResetConfirmView(auth_views.PasswordResetConfirmView):
         return response
 
 
+@panel_required()
+@require_POST
+def logout_others(request):
+    """Cierra la sesión en todos los demás navegadores de esta cuenta."""
+    closed = end_other_sessions(request)
+    audit(request, request.user, message=f"Cerrar sesión en otros dispositivos ({closed}).")
+    messages.success(
+        request,
+        f"Cerramos {closed} sesión{'es' if closed != 1 else ''} en otros dispositivos."
+        if closed
+        else "No había otras sesiones abiertas.",
+    )
+    return redirect("panel:account")
+
+
 @never_cache
 @require_POST
 def logout_view(request):
@@ -96,6 +122,11 @@ def account(request):
             "form": form,
             "current_user": request.user,
             "password_url": reverse("panel:password_change"),
+            "two_factor_enabled": two_factor.is_enabled(request.user),
+            "two_factor_required": two_factor.is_required(request.user),
+            "recovery_codes_left": two_factor.remaining_recovery_codes(request.user),
+            "devices": request.user.known_devices.all()[:6],
+            "current_device": current_device_key(request),
         },
         active="account",
         title="Mi cuenta",

@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import auth, content, dashboard, institution, messages, operations
+from . import auth, content, dashboard, institution, messages, operations, security
 
 app_name = "panel"
 
@@ -61,4 +61,14 @@ urlpatterns = [
     path("actividad/", operations.activity, name="activity"),
     path("cuenta/", auth.account, name="account"),
     path("cuenta/contrasena/", auth.password_change, name="password_change"),
+    path("cuenta/cerrar-otras-sesiones/", auth.logout_others, name="logout_others"),
+    path("ingresar/verificar/", security.verify, name="two_factor_verify"),
+    path("cuenta/verificacion/", security.setup, name="two_factor_setup"),
+    path("cuenta/verificacion/codigos/", security.regenerate_codes, name="two_factor_codes"),
+    path("cuenta/verificacion/desactivar/", security.disable, name="two_factor_disable"),
+    path(
+        "usuarios/<int:pk>/verificacion/restablecer/",
+        operations.user_two_factor_reset,
+        name="user_two_factor_reset",
+    ),
 ]

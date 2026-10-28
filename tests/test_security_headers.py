@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 from django.test import Client, override_settings
+from django.urls import reverse
 
 from apps.core.middleware import SecurityHeadersMiddleware
 
@@ -62,3 +63,37 @@ def test_templates_have_no_inline_code_that_the_policy_would_block():
         if re.search(r"\sstyle=\"|<style\b|\son[a-z]+=\"", text):
             offenders.append(f"{path.name}: estilo o evento en línea")
     assert offenders == []
+
+
+def test_panel_is_never_indexed(client):
+    assert client.get(reverse("panel:login")).headers["X-Robots-Tag"] == "noindex, nofollow"
+    assert "X-Robots-Tag" not in client.get("/").headers
+
+
+def test_resources_cannot_be_embedded_elsewhere(client):
+    assert client.get("/").headers["Cross-Origin-Resource-Policy"] == "same-origin"
+
+
+def test_robots_hides_the_panel_but_not_the_admin_path(client, settings):
+    content = client.get("/robots.txt").content.decode()
+
+    assert "Disallow: /panel/" in content
+    assert settings.ADMIN_URL not in content
+
+
+def test_security_txt(client, settings):
+    assert client.get("/.well-known/security.txt").status_code == 404
+
+    settings.SECURITY_CONTACT_EMAIL = "seguridad@example.com"
+    content = client.get("/.well-known/security.txt").content.decode()
+
+    assert "Contact: mailto:seguridad@example.com" in content
+    assert "Expires: " in content and content.count("\n") >= 4
+
+
+def test_short_passwords_are_rejected():
+    from django.contrib.auth.password_validation import validate_password
+    from django.core.exceptions import ValidationError
+
+    with pytest.raises(ValidationError):
+        validate_password("Corta-123")

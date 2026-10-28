@@ -60,11 +60,11 @@ def record_failure(username: str | None, ip: str | None, *, request=None) -> Non
     recent = LoginAttempt.objects.filter(created_at__gte=_window_start(window))
     if ip and recent.filter(ip_address=ip).count() == per_ip:
         alert_login_locked(name, ip, by_ip=True, request=request)
-    elif (
-        not name.startswith("reset:")
-        and recent.filter(username=name, ip_address=ip).count() == per_user
-    ):
-        alert_login_locked(name, ip, by_ip=False, request=request)
+    elif recent.filter(username=name, ip_address=ip).count() == per_user:
+        if name.startswith("2fa:"):
+            alert_login_locked(name[4:], ip, by_ip=False, request=request, second_step=True)
+        elif not name.startswith("reset:"):
+            alert_login_locked(name, ip, by_ip=False, request=request)
 
 
 def clear_failures(username: str | None, ip: str | None) -> None:

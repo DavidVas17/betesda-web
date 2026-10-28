@@ -1,7 +1,11 @@
+from datetime import UTC, timedelta
+
+from django.conf import settings
 from django.db import DatabaseError, connections
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.templatetags.static import static
+from django.utils import timezone
 
 from apps.events.selectors import upcoming_events
 from apps.news.selectors import published_posts
@@ -35,6 +39,28 @@ def ministries(request: HttpRequest) -> HttpResponse:
 
 def favicon(request: HttpRequest) -> HttpResponse:
     return redirect(static("images/favicon-betesda.ico"), permanent=True)
+
+
+def robots_txt(request: HttpRequest) -> HttpResponse:
+    """El panel no se indexa. La ruta del admin no se menciona: listarla aquí la revelaría."""
+    lines = ["User-agent: *", "Disallow: /panel/", "Disallow: /health/", ""]
+    return HttpResponse("\n".join(lines), content_type="text/plain; charset=utf-8")
+
+
+def security_txt(request: HttpRequest) -> HttpResponse:
+    """Contacto para reportar vulnerabilidades (RFC 9116)."""
+    contact = settings.SECURITY_CONTACT_EMAIL
+    if not contact:
+        return HttpResponse(status=404)
+    expires = (timezone.now() + timedelta(days=365)).replace(microsecond=0)
+    lines = [
+        f"Contact: mailto:{contact}",
+        f"Expires: {expires.astimezone(UTC).isoformat().replace('+00:00', 'Z')}",
+        "Preferred-Languages: es, en",
+        f"Canonical: {request.build_absolute_uri('/.well-known/security.txt')}",
+        "",
+    ]
+    return HttpResponse("\n".join(lines), content_type="text/plain; charset=utf-8")
 
 
 def live(request: HttpRequest) -> JsonResponse:

@@ -2,7 +2,7 @@
 {% load static %}
 {% block title %}Peticiones de oración / Contáctanos | Betesda Rosa de Sarón{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/contact.css' %}?v=horarios-20261014"><link rel="stylesheet" href="{% static 'css/contact-page.css' %}?v=carbon-20261011">{% endblock %}
-{% block extra_js %}<script src="{% static 'js/contact.js' %}?v=forms-20261011" defer></script><script src="{% static 'js/forms.js' %}?v=forms-20261011" defer></script>{% endblock %}
+{% block extra_js %}<script src="{% static 'js/contact.js' %}?v=forms-20261011" defer></script><script src="{% static 'js/forms.js' %}?v=forms-20261011" defer></script>{% if turnstile_site_key %}<script src="{{ turnstile_script }}" async defer></script>{% endif %}{% endblock %}
 {% block content %}
   {% include 'includes/page_heading.html' with eyebrow='Estamos para escucharte' heading='Peticiones de oración / Contáctanos' intro='Comparte una petición de oración o escríbenos para conocer más de la iglesia. Elige la opción que necesitas.' %}
   <section id="contacto" class="section contact-band" aria-labelledby="contact-title"><div class="container contact-layout">
@@ -27,11 +27,11 @@
         <p class="contact-required-note">Los campos con * son obligatorios. El teléfono es opcional.</p>
         {% for notice in messages %}{% if 'contact' in notice.tags %}<div class="contact-notice contact-success contact-success-card" role="status" tabindex="-1" data-contact-success><span class="contact-success-icon">{% include 'includes/icon.html' with name='heart' %}</span><div><strong>¡Gracias por escribirnos!</strong><p>{{ notice }}</p></div></div>{% endif %}{% endfor %}
         <form class="contact-form" action="{% url 'contacts:send' %}#formulario" method="post" aria-labelledby="contact-form-title" data-enhanced-form data-loading-label="Enviando…">
-          {% csrf_token %}{{ contact_form.kind }}<div hidden aria-hidden="true">{{ contact_form.website }}</div>
+          {% csrf_token %}{{ contact_form.kind }}{{ contact_form.started }}<div hidden aria-hidden="true">{{ contact_form.website }}</div>
           {% if contact_form.errors %}<div class="fk-summary contact-notice contact-error" role="alert"><strong>Revisa estos datos para enviar tu solicitud:</strong><ul>{% for error in contact_form.non_field_errors %}<li>{{ error }}</li>{% endfor %}{% for error in contact_form.kind.errors %}<li>{{ error }}</li>{% endfor %}{% for field in contact_form.visible_fields %}{% if field.name != 'website' %}{% for error in field.errors %}<li><a href="#{{ field.id_for_label }}">{{ field.label }}: {{ error }}</a></li>{% endfor %}{% endif %}{% endfor %}</ul></div>{% endif %}
           {% for field in contact_form.visible_fields %}{% if field.name == 'privacy_accepted' %}<div class="contact-field contact-privacy"><div class="contact-consent">{{ field }}<label for="{{ field.id_for_label }}" data-contact-label="{{ field.name }}">{{ field.label }}</label></div><p id="{{ field.auto_id }}_helptext" class="contact-help" data-contact-copy="privacy">{{ field.help_text }}</p><p class="contact-help contact-retention">Cuando terminamos de atender tu solicitud, se elimina de forma automática después de {{ retention_months }} mes{{ retention_months|pluralize:'es' }}.</p>{% include 'contacts/field_errors.html' %}</div>
           {% elif field.name != 'website' %}<div class="contact-field{% if field.name == 'email' or field.name == 'phone' %} contact-field-half{% endif %}"><label for="{{ field.id_for_label }}"><span data-contact-label="{{ field.name }}">{{ field.label }}</span>{% if field.field.required %}<span class="contact-required" aria-hidden="true">*</span>{% else %}<span class="contact-optional">Opcional</span>{% endif %}</label>{{ field }}{% if field.help_text %}<p id="{{ field.auto_id }}_helptext" class="contact-help">{{ field.help_text }}</p>{% endif %}{% include 'contacts/field_errors.html' %}</div>{% endif %}{% endfor %}
-          <button class="button button-primary contact-submit" type="submit"><span data-contact-copy="button">{{ contact_mode.button }}</span>{% include 'includes/icon.html' with name='send' %}</button>
+          {% if turnstile_site_key %}<div class="cf-turnstile contact-turnstile" data-sitekey="{{ turnstile_site_key }}" data-language="es" data-theme="light"></div>{% endif %}<button class="button button-primary contact-submit" type="submit"><span data-contact-copy="button">{{ contact_mode.button }}</span>{% include 'includes/icon.html' with name='send' %}</button>
         </form>
       </div>
     </div>

@@ -10,7 +10,12 @@ from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.views.decorators.http import require_GET, require_http_methods
 
-from apps.accounts.alerts import alert_account_created, alert_password_changed
+from apps.accounts import two_factor
+from apps.accounts.alerts import (
+    alert_account_created,
+    alert_password_changed,
+    alert_two_factor_changed,
+)
 from apps.accounts.roles import PRIVILEGED_ROLE_NAMES, ROLE_NAMES
 from apps.contacts.models import ContactMessage
 from apps.core.content import INSTITUTION
@@ -218,6 +223,11 @@ def _team_form(request, pk=None):
                 if user and user.pk != request.user.pk
                 else ""
             ),
+            "two_factor_reset_url": (
+                reverse("panel:user_two_factor_reset", args=[pk])
+                if user and user.pk != request.user.pk and two_factor.is_enabled(user)
+                else ""
+            ),
             "delete_url": (
                 reverse("panel:user_delete", args=[pk])
                 if user and user.pk != request.user.pk
@@ -239,6 +249,41 @@ def user_create(request):
 @require_http_methods(["GET", "POST"])
 def user_edit(request, pk):
     return _team_form(request, pk)
+
+
+@panel_required(TEAM_PERMISSION)
+@require_http_methods(["GET", "POST"])
+def user_two_factor_reset(request, pk):
+    """Para quien perdió su teléfono y sus códigos: quita su verificación para configurarla
+    de nuevo. Mismas reglas que editar la cuenta (nadie la quita a un par ni a sí mismo)."""
+    user = _team_member(request, pk, allow_self=False)
+    if request.method == "POST":
+        two_factor.disable(user)
+        audit(request, user, message="Verificación en dos pasos restablecida.")
+        alert_two_factor_changed(user, enabled=False, by=request.user, request=request)
+        messages.success(
+            request,
+            "Listo. Al ingresar, esta persona configurará la verificación de nuevo"
+            + (" (es obligatoria para su rol)." if two_factor.is_required(user) else "."),
+        )
+        return redirect("panel:user_edit", pk=pk)
+    return panel_render(
+        request,
+        "panel/delete.html",
+        {
+            "object": user,
+            "confirm_heading": "Restablecer verificación en dos pasos",
+            "confirm_question": "¿Restablecer la verificación en dos pasos de esta cuenta?",
+            "cancel_url": reverse("panel:user_edit", args=[pk]),
+            "delete_message": (
+                "Úsalo solo si esta persona perdió su teléfono y sus códigos de respaldo. "
+                "Confirma su identidad en persona o por teléfono antes de continuar."
+            ),
+            "submit_label": "Restablecer verificación",
+        },
+        active="users",
+        title="Restablecer verificación",
+    )
 
 
 @panel_required(TEAM_PERMISSION)

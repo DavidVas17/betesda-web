@@ -116,6 +116,12 @@ def hash_device_token(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
 
 
+def current_device_key(request) -> str:
+    """Huella del navegador actual, para marcarlo en la lista de dispositivos."""
+    token = request.COOKIES.get(DEVICE_COOKIE, "") or getattr(request, "device_cookie", "")
+    return hash_device_token(token) if token else ""
+
+
 def remember_device(request, user) -> None:
     """Al iniciar sesión: si el dispositivo es nuevo para esta cuenta, lo guarda y avisa.
 
@@ -194,7 +200,9 @@ def _name(user) -> str:
     return user.get_short_name() or user.get_full_name() or user.get_username()
 
 
-def alert_login_locked(username: str, ip: str | None, *, by_ip: bool, request=None) -> None:
+def alert_login_locked(
+    username: str, ip: str | None, *, by_ip: bool, request=None, second_step: bool = False
+) -> None:
     window = max(1, settings.LOGIN_RATE_LIMIT[2] // 60)
     if by_ip:
         send_alert(
@@ -224,6 +232,33 @@ def alert_login_locked(username: str, ip: str | None, *, by_ip: bool, request=No
     if user is None:
         # Usuario inexistente: no se avisa a nadie por correo (sería ruido); queda en el log.
         logger.warning("Bloqueo de ingreso para usuario inexistente %s desde %s", username, ip)
+        return
+    if second_step:
+        send_alert(
+            Email(
+                subject="Tu contraseña fue usada y se bloqueó el segundo paso",
+                title="Alguien tiene tu contraseña",
+                paragraphs=[
+                    f"Hola {_name(user)}:",
+                    "Alguien escribió tu contraseña correcta, pero falló varias veces el código "
+                    "de verificación. La verificación en dos pasos lo detuvo y bloqueamos esa "
+                    f"conexión durante {window} minutos.",
+                ],
+                details=[
+                    ("Cuenta", user.get_username()),
+                    ("IP", ip or "desconocida"),
+                    ("Fecha", now_label()),
+                ],
+                button=(
+                    "Cambiar mi contraseña ahora",
+                    absolute_url(reverse("panel:password_reset"), request),
+                ),
+                note="Si no fuiste tú, cambia tu contraseña de inmediato: la otra persona ya "
+                "la conoce.",
+            ),
+            to=[user.email],
+            bcc=admin_recipients(exclude=user),
+        )
         return
     send_alert(
         Email(
@@ -313,4 +348,66 @@ def alert_password_changed(user, *, by=None, request=None) -> None:
             note="Si no reconoces este cambio, avisa de inmediato al administrador de la iglesia.",
         ),
         to=[user.email],
+    )
+
+
+def alert_two_factor_changed(user, *, enabled: bool, by=None, request=None) -> None:
+    """A la persona (y a quienes administran si la quitó otra persona)."""
+    by_other = by is not None and by.pk != user.pk
+    if enabled:
+        title, text = (
+            "Verificación en dos pasos activada",
+            "Desde ahora, además de tu contraseña, el panel te pedirá un código de tu app.",
+        )
+    elif by_other:
+        title, text = (
+            "Tu verificación en dos pasos fue restablecida",
+            f"{by.get_full_name() or by.get_username()} restableció tu verificación en dos "
+            "pasos, por ejemplo porque cambiaste de teléfono. Configúrala de nuevo al ingresar.",
+        )
+    else:
+        title, text = (
+            "Verificación en dos pasos desactivada",
+            "Quitaste la verificación en dos pasos de tu cuenta.",
+        )
+    send_alert(
+        Email(
+            subject=title,
+            title=title,
+            paragraphs=[f"Hola {_name(user)}:", text],
+            details=[
+                ("Cuenta", user.get_username()),
+                ("IP", (client_ip(request) if request else None) or "desconocida"),
+                ("Fecha", now_label()),
+            ],
+            note="Si no reconoces este cambio, avisa de inmediato al administrador de la iglesia.",
+        ),
+        to=[user.email] if user.email else [],
+        bcc=admin_recipients(exclude=user) if (by_other or not enabled) else [],
+    )
+
+
+def alert_recovery_code_used(user, *, request=None) -> None:
+    from .two_factor import remaining_recovery_codes
+
+    remaining = remaining_recovery_codes(user)
+    send_alert(
+        Email(
+            subject="Se usó un código de respaldo",
+            title="Se usó un código de respaldo",
+            paragraphs=[
+                f"Hola {_name(user)}:",
+                "Alguien ingresó a tu cuenta con uno de tus códigos de respaldo en lugar del "
+                "código de tu app.",
+            ],
+            details=[
+                ("Códigos que te quedan", str(remaining)),
+                ("IP", (client_ip(request) if request else None) or "desconocida"),
+                ("Fecha", now_label()),
+            ],
+            note="Si no fuiste tú, cambia tu contraseña y genera códigos nuevos en Mi cuenta "
+            "de inmediato.",
+        ),
+        to=[user.email] if user.email else [],
+        bcc=admin_recipients(exclude=user),
     )

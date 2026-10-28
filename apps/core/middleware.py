@@ -28,6 +28,7 @@ class SecurityHeadersMiddleware:
             else "Content-Security-Policy"
         )
         self.permissions = ", ".join(f"{name}=()" for name in settings.PERMISSIONS_POLICY_DENY)
+        self.private_prefixes = ("/panel/", f"/{settings.ADMIN_URL}")
 
     def __call__(self, request):
         response = self.get_response(request)
@@ -35,4 +36,9 @@ class SecurityHeadersMiddleware:
             response.headers.setdefault(self.csp_header, self.csp)
         if self.permissions:
             response.headers.setdefault("Permissions-Policy", self.permissions)
+        # Nadie puede incrustar nuestros archivos desde otro sitio.
+        response.headers.setdefault("Cross-Origin-Resource-Policy", "same-origin")
+        if request.path.startswith(self.private_prefixes):
+            # El panel y el admin nunca deben aparecer en buscadores.
+            response.headers.setdefault("X-Robots-Tag", "noindex, nofollow")
         return response

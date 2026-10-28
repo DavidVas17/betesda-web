@@ -21,7 +21,7 @@
       {% else %}Completa la información con palabras claras. Los cambios se guardarán cuando pulses el botón al final del formulario.
       {% endif %}
     </p>
-    {% if password_url %}<a class="p-button p-button-secondary" href="{{ password_url }}">{% include 'panel/icon.html' with name='lock' %}Cambiar contraseña</a>{% endif %}
+    {% if password_url %}<a class="p-button p-button-secondary" href="{{ password_url }}">{% include 'panel/icon.html' with name='lock' %}Cambiar contraseña</a>{% endif %}{% if two_factor_reset_url %}<a class="p-button p-button-secondary" href="{{ two_factor_reset_url }}">{% include 'panel/icon.html' with name='lock' %}Restablecer verificación en dos pasos</a>{% endif %}
     {% if can_save != False %}
       <div class="p-helper-divider"></div><strong>Antes de guardar</strong>
       <p>

@@ -79,17 +79,13 @@ def test_failures_outside_the_window_do_not_count(client, staff):
     assert attempt(client, "clave-correcta-2026").status_code == 302
 
 
-def test_admin_login_has_the_same_protection(client, settings):
-    User.objects.create_superuser(username="jefe", password="clave-correcta-2026")
-    url = reverse("admin:login")
-    for _ in range(3):
-        client.post(url, {"username": "jefe", "password": "mala"}, REMOTE_ADDR="203.0.113.5")
+def test_admin_login_goes_through_the_protected_panel_login(client):
+    """El admin no tiene formulario propio: se ingresa por el panel (freno y 2FA)."""
+    response = client.get(reverse("admin:login"))
 
-    response = client.post(
-        url, {"username": "jefe", "password": "clave-correcta-2026"}, REMOTE_ADDR="203.0.113.5"
-    )
-
-    assert "demasiados intentos" in response.content.decode()
+    assert response.status_code == 302
+    assert response["Location"].startswith(reverse("panel:login"))
+    assert client.post(reverse("admin:login"), {"username": "x"}).status_code == 302
 
 
 def test_purge_keeps_recent_attempts():

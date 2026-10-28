@@ -3,6 +3,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_GET
 
+from apps.accounts import two_factor
 from apps.contacts.models import ContactMessage
 from apps.events.models import Event
 from apps.gallery.models import Album
@@ -117,6 +118,7 @@ def dashboard(request):
         request,
         "panel/dashboard.html",
         {
+            "suggest_two_factor": not two_factor.is_enabled(request.user),
             "kpis": kpis,
             "quick_actions": quick_actions,
             "recent_messages": recent_messages,

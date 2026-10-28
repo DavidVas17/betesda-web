@@ -1,5 +1,6 @@
 """Límite de envíos del formulario público e IP real detrás del proxy."""
 
+import itertools
 from datetime import timedelta
 
 import pytest
@@ -13,13 +14,19 @@ from apps.contacts.protection import client_ip
 pytestmark = pytest.mark.django_db
 
 
+_sequence = itertools.count()
+
+
 def contact_data(**extra):
+    # Cada envío es de una persona distinta: aquí se prueba el límite por IP, no el de correo
+    # ni el de mensajes duplicados.
+    number = next(_sequence)
     data = {
         "kind": "PRAYER",
         "name": "María",
-        "email": "maria@example.com",
+        "email": f"persona{number}@example.com",
         "subject": "Oración por mi familia",
-        "message": "Gracias por orar.",
+        "message": f"Gracias por orar ({number}).",
         "privacy_accepted": "on",
     }
     data.update(extra)

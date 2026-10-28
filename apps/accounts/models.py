@@ -61,3 +61,47 @@ class KnownDevice(models.Model):
 
     def __str__(self) -> str:
         return f"{self.user} · {self.label}"
+
+
+class TwoFactorDevice(models.Model):
+    """Verificación en dos pasos con una app de códigos (TOTP).
+
+    El secreto se guarda en la base como lo hacen las bibliotecas habituales (django-otp):
+    la base vive en una red interna sin acceso desde Internet y se respalda cifrada.
+    """
+
+    user = models.OneToOneField(
+        User, verbose_name="usuario", on_delete=models.CASCADE, related_name="two_factor"
+    )
+    secret = models.CharField("secreto", max_length=64)
+    confirmed_at = models.DateTimeField("activada", null=True, blank=True)
+    last_step = models.BigIntegerField("último intervalo usado", default=0)
+    created_at = models.DateTimeField("creada", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "verificación en dos pasos"
+        verbose_name_plural = "verificaciones en dos pasos"
+
+    def __str__(self) -> str:
+        return f"{self.user} · {'activa' if self.confirmed_at else 'pendiente'}"
+
+    @property
+    def is_active(self) -> bool:
+        return self.confirmed_at is not None
+
+
+class RecoveryCode(models.Model):
+    """Código de respaldo de un solo uso, por si se pierde el teléfono. Solo se guarda su huella."""
+
+    user = models.ForeignKey(
+        User, verbose_name="usuario", on_delete=models.CASCADE, related_name="recovery_codes"
+    )
+    code_hash = models.CharField("huella", max_length=64, db_index=True)
+    used_at = models.DateTimeField("usado", null=True, blank=True)
+
+    class Meta:
+        verbose_name = "código de respaldo"
+        verbose_name_plural = "códigos de respaldo"
+
+    def __str__(self) -> str:
+        return f"{self.user} · {'usado' if self.used_at else 'disponible'}"

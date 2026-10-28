@@ -134,13 +134,13 @@ def test_missing_consent_is_rejected(client, contact_data):
     assert not ContactMessage.objects.exists()
 
 
-def test_honeypot_rejects_spam(client, contact_data):
+def test_honeypot_discards_bots_without_telling_them(client, contact_data):
     contact_data["website"] = "https://spam.example.com"
 
     response = client.post(reverse("contacts:send"), contact_data)
 
-    assert response.status_code == 200
-    assert response.context["contact_form"].non_field_errors()
+    # El bot ve la misma respuesta que una persona, pero no se guarda nada.
+    assert response.status_code == 302
     assert not ContactMessage.objects.exists()
 
 

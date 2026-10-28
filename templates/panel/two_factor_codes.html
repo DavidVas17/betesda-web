@@ -1,0 +1,11 @@
+{% extends 'panel/base.html' %}
+{% load static %}
+{% block content %}
+{% include 'panel/heading.html' with heading='Tus códigos de respaldo' intro='Cada código sirve una sola vez para ingresar si no tienes tu teléfono.' %}
+<section class="p-card p-form-card p-2fa-codes-card">
+  <div class="p-notice p-notice-warning" role="alert"><strong>Guárdalos ahora.</strong> Por seguridad no se vuelven a mostrar. Imprímelos o cópialos en un lugar seguro; no los guardes en el mismo teléfono.</div>
+  <ol class="p-2fa-codes" id="codigos-respaldo">{% for code in codes %}<li><code>{{ code }}</code></li>{% endfor %}</ol>
+  <div class="p-security-actions p-2fa-codes-actions"><button class="p-button p-button-secondary" type="button" data-copy-target="codigos-respaldo" hidden>Copiar códigos</button><button class="p-button p-button-secondary" type="button" data-print hidden>Imprimir</button><a class="p-button p-button-primary" href="{% url 'panel:account' %}">{% include 'panel/icon.html' with name='check' %}Ya los guardé</a></div>
+</section>
+<script src="{% static 'panel/js/two_factor.js' %}" defer></script>
+{% endblock %}
