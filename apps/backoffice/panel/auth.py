@@ -13,6 +13,7 @@ from django.views.decorators.http import require_http_methods, require_POST
 from apps.accounts import two_factor
 from apps.accounts.alerts import alert_password_changed, current_device_key
 from apps.accounts.sessions import end_other_sessions
+from apps.accounts.throttle import unlock_account
 
 from .access import panel_required
 from .forms import (
@@ -21,7 +22,7 @@ from .forms import (
     PanelSetPasswordForm,
     ProfileForm,
 )
-from .security import start_pending_login
+from .security import PASSWORD_UPGRADE_KEY, require_password_upgrade, start_pending_login
 from .utils import audit, panel_render
 
 
@@ -38,8 +39,13 @@ class PanelLoginView(LoginView):
         """Con verificación en dos pasos, la contraseña correcta aún no abre la sesión."""
         user = form.get_user()
         if not two_factor.is_enabled(user):
-            return super().form_valid(form)
-        start_pending_login(self.request, user, self.get_success_url())
+            response = super().form_valid(form)
+            if form.weak_password:
+                require_password_upgrade(self.request)
+            return response
+        start_pending_login(
+            self.request, user, self.get_success_url(), weak_password=form.weak_password
+        )
         return redirect("panel:two_factor_verify")
 
 
@@ -77,6 +83,10 @@ class PanelPasswordResetConfirmView(auth_views.PasswordResetConfirmView):
     def form_valid(self, form):
         response = super().form_valid(form)
         audit(self.request, form.user, message="Restablecer contraseña por correo", actor=form.user)
+        alert_password_changed(form.user, request=self.request)
+        # Quien recuperó su contraseña ya demostró ser la dueña del correo: se quita el
+        # bloqueo por intentos fallidos para que pueda entrar de inmediato.
+        unlock_account(form.user.get_username())
         messages.success(
             self.request, "Tu contraseña cambió. Ya puedes ingresar con la nueva contraseña."
         )
@@ -144,6 +154,7 @@ def password_change(request):
         update_session_auth_hash(request, user)
         audit(request, user, message="Cambiar contraseña personal")
         alert_password_changed(user, request=request)
+        request.session.pop(PASSWORD_UPGRADE_KEY, None)
         messages.success(request, "Tu contraseña cambió. Tu sesión sigue abierta.")
         return redirect("panel:account")
     return panel_render(

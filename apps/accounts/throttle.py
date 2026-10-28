@@ -50,6 +50,22 @@ def seconds_until_allowed(username: str | None, ip: str | None) -> int:
     return max(wait, 0)
 
 
+def attempts_left(username: str | None, ip: str | None) -> int:
+    """Intentos fallidos que quedan para esta combinación de usuario e IP."""
+    per_user, _, window = settings.LOGIN_RATE_LIMIT
+    used = LoginAttempt.objects.filter(
+        created_at__gte=_window_start(window), username=_normalize(username), ip_address=ip
+    ).count()
+    return max(per_user - used, 0)
+
+
+def unlock_account(username: str | None) -> int:
+    """Quita los bloqueos de una cuenta (por ejemplo, al recuperar la contraseña por correo)."""
+    name = _normalize(username)
+    deleted, _ = LoginAttempt.objects.filter(username__in=(name, f"2fa:{name}")).delete()
+    return deleted
+
+
 def record_failure(username: str | None, ip: str | None, *, request=None) -> None:
     """Guarda el fallo y, si con él se alcanza un límite, avisa por correo (una sola vez)."""
     from .alerts import alert_login_locked
@@ -113,6 +129,22 @@ class ThrottledLoginMixin:
         except forms.ValidationError as error:
             if any(e.code == "invalid_login" for e in error.error_list):
                 record_failure(username, ip, request=self.request)
+                left = attempts_left(username, ip)
+                if 0 < left <= 2:
+                    # Avisar antes del bloqueo evita la sorpresa de quedar fuera 15 minutos.
+                    minutes = max(1, settings.LOGIN_RATE_LIMIT[2] // 60)
+                    raise forms.ValidationError(
+                        [
+                            *error.error_list,
+                            forms.ValidationError(
+                                f"Te queda{'n' if left != 1 else ''} {left} "
+                                f"intento{'s' if left != 1 else ''} antes de un bloqueo de "
+                                f"{minutes} minutos. Si no recuerdas tu contraseña, usa "
+                                "«¿Olvidaste tu contraseña?».",
+                                code="attempts_left",
+                            ),
+                        ]
+                    ) from error
             raise
         clear_failures(username, ip)
         return cleaned

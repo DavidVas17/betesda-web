@@ -10,6 +10,7 @@ from django.contrib.auth.forms import (
     UserCreationForm,
 )
 from django.contrib.auth.models import Permission
+from django.contrib.auth.password_validation import validate_password
 from django.db.models import Q
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -41,6 +42,12 @@ logger = logging.getLogger(__name__)
 
 
 class PanelAuthenticationForm(ThrottledLoginMixin, AuthenticationForm):
+    error_messages = {
+        **AuthenticationForm.error_messages,
+        "invalid_login": (
+            "El usuario o la contraseña no son correctos. Revisa mayúsculas y minúsculas."
+        ),
+    }
     username = forms.CharField(
         label="Usuario",
         widget=forms.TextInput(attrs={"autocomplete": "username", "autofocus": True}),
@@ -55,6 +62,19 @@ class PanelAuthenticationForm(ThrottledLoginMixin, AuthenticationForm):
         super().confirm_login_allowed(user)
         if not user.is_staff:
             raise forms.ValidationError("Esta cuenta no tiene acceso al panel.", code="not_staff")
+
+    def clean(self):
+        cleaned = super().clean()
+        # La contraseña correcta pero que ya no cumple las reglas actuales (por ejemplo, era
+        # más corta) se acepta, y al entrar se pide cambiarla.
+        self.weak_password = False
+        user = self.get_user()
+        if user is not None:
+            try:
+                validate_password(cleaned.get("password", ""), user)
+            except forms.ValidationError:
+                self.weak_password = True
+        return cleaned
 
 
 class PanelPasswordResetForm(PasswordResetForm):

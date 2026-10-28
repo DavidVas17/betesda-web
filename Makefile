@@ -45,7 +45,7 @@ check: ## Ejecuta las verificaciones antes de un PR
 	docker compose exec web python manage.py makemigrations --check --dry-run
 	docker compose exec web pytest
 
-admin: ## Crea o actualiza el administrador definido en .env
+admin: ## Crea el administrador del .env (si existe, actualiza su correo sin tocar la contraseña)
 	docker compose exec web python manage.py bootstrap_admin
 
 roles: ## Aplica los permisos de cada rol definidos en apps/accounts/roles.py

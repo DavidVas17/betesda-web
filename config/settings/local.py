@@ -8,3 +8,6 @@ DEBUG = env.bool("DJANGO_DEBUG", default=True)
 # En desarrollo la política solo avisa en la consola del navegador: la página de error de
 # Django usa estilos en línea y se vería rota si se bloquearan.
 CSP_REPORT_ONLY = env.bool("DJANGO_CSP_REPORT_ONLY", default=True)
+
+# Si falta aplicar migraciones (por ejemplo tras un git pull), lo dice con el comando a correr.
+MIDDLEWARE = [*MIDDLEWARE, "apps.core.middleware.PendingMigrationsMiddleware"]  # noqa: F405

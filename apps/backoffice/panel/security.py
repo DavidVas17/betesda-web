@@ -29,19 +29,25 @@ from apps.accounts.throttle import (
 from apps.core.network import client_ip
 
 PENDING_KEY = "two_factor_pending"
+PASSWORD_UPGRADE_KEY = "password_upgrade_required"
 
 
 # --- Ingreso ----------------------------------------------------------------------------------
 
 
-def start_pending_login(request, user, next_url: str) -> None:
+def start_pending_login(request, user, next_url: str, *, weak_password=False) -> None:
     request.session.cycle_key()
     request.session[PENDING_KEY] = {
         "user": user.pk,
         "backend": getattr(user, "backend", None),
         "at": time.time(),
         "next": next_url,
+        "weak_password": weak_password,
     }
+
+
+def require_password_upgrade(request) -> None:
+    request.session[PASSWORD_UPGRADE_KEY] = True
 
 
 def _pending_user(request):
@@ -101,6 +107,8 @@ def verify(request):
                 clear_failures(key, ip)
                 request.session.pop(PENDING_KEY, None)
                 login(request, user, backend=data["backend"] or None)
+                if data.get("weak_password"):
+                    require_password_upgrade(request)
                 if method == "respaldo":
                     alert_recovery_code_used(user, request=request)
                     remaining = two_factor.remaining_recovery_codes(user)
@@ -294,3 +302,31 @@ class TwoFactorEnforcementMiddleware:
             reverse("panel:login"),
         )
         return path not in allowed and not two_factor.is_enabled(request.user)
+
+
+class PasswordUpgradeMiddleware:
+    """Si la contraseña con la que se entró ya no cumple las reglas, se pide cambiarla antes
+    de seguir. Solo afecta a esa sesión; el resto del equipo no nota nada."""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if (
+            request.user.is_authenticated
+            and request.session.get(PASSWORD_UPGRADE_KEY)
+            and request.path.startswith(("/panel/", f"/{settings.ADMIN_URL}"))
+            and request.path
+            not in (
+                reverse("panel:password_change"),
+                reverse("panel:logout"),
+                reverse("panel:two_factor_setup"),
+            )
+        ):
+            messages.warning(
+                request,
+                "Tu contraseña es más corta o sencilla de lo que pedimos ahora. Elige una nueva "
+                "de al menos 10 caracteres para continuar.",
+            )
+            return redirect("panel:password_change")
+        return self.get_response(request)

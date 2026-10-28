@@ -103,7 +103,8 @@ Lo marcado como "No deseado" se conserva 30 días por si fue un error.
 Borrar el archivo del repositorio no basta: queda en el historial. Hay que cambiar el secreto.
 
 1. Generar una `DJANGO_SECRET_KEY` nueva y reemplazarla en el `.env` del servidor.
-2. Cambiar la contraseña del superusuario (`make admin` con el nuevo valor en `.env`).
+2. Cambiar la contraseña del superusuario: nuevo valor en `.env` y
+   `docker compose exec web python manage.py bootstrap_admin --reset-password`.
 3. Cambiar `POSTGRES_PASSWORD` y `DATABASE_URL` si el archivo expuesto los tenía.
 4. Reiniciar los servicios y cerrar sesiones abiertas.
 

@@ -54,6 +54,8 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "apps.backoffice.panel.security.TwoFactorEnforcementMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    # Después de los mensajes: avisa por qué pide cambiar la contraseña.
+    "apps.backoffice.panel.security.PasswordUpgradeMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 

@@ -66,6 +66,11 @@ docker compose -f compose.prod.yaml exec web python manage.py check --deploy
 docker compose -f compose.prod.yaml exec web python manage.py bootstrap_admin
 ```
 
+`bootstrap_admin` crea el superusuario con la contraseña del `.env` (debe tener 10 caracteres
+o más). Si la cuenta ya existe, solo actualiza su correo y permisos: la contraseña no cambia
+salvo que agregues `--reset-password`. Al primer ingreso el panel pide activar la verificación
+en dos pasos.
+
 `compose.prod.yaml` también levanta el servicio `maintenance`, que cada día elimina los
 mensajes que cumplieron su plazo (ver [SECURITY.md](SECURITY.md#plazo-de-conservación)).
 

@@ -97,3 +97,25 @@ def test_short_passwords_are_rejected():
 
     with pytest.raises(ValidationError):
         validate_password("Corta-123")
+
+
+def test_dev_warns_about_pending_migrations(rf, monkeypatch):
+    from django.http import HttpResponse
+
+    from apps.core.middleware import PendingMigrationsMiddleware
+
+    middleware = PendingMigrationsMiddleware(lambda request: HttpResponse("ok"))
+    monkeypatch.setattr(middleware, "_pending", lambda: ["accounts.0006_verificacion"])
+    response = middleware(rf.get("/"))
+    assert response.status_code == 503
+    assert b"accounts.0006_verificacion" in response.content
+    assert b"python manage.py migrate" in response.content
+
+    monkeypatch.setattr(middleware, "_pending", lambda: [])
+    assert middleware(rf.get("/")).content == b"ok"
+
+
+def test_pending_migrations_check_runs_against_the_real_database():
+    from apps.core.middleware import PendingMigrationsMiddleware
+
+    assert PendingMigrationsMiddleware._pending() == []
