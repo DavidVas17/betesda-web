@@ -109,6 +109,10 @@ LOGIN_REDIRECT_URL = "/panel/"
 LOGOUT_REDIRECT_URL = "/"
 # Verificación en dos pasos obligatoria para el superusuario y Administración de la iglesia.
 TWO_FACTOR_ENFORCE = env.bool("TWO_FACTOR_ENFORCE", default=True)
+# Acciones delicadas (exportar mensajes, cuentas del equipo) piden la contraseña otra vez si
+# se escribió hace más de estos minutos.
+RECENT_AUTH_REQUIRED = True
+RECENT_AUTH_MINUTES = env.int("RECENT_AUTH_MINUTES", default=10)
 # Minutos para escribir el código después de la contraseña.
 TWO_FACTOR_PENDING_MINUTES = 5
 # La sesión del panel se cierra tras estas horas sin actividad: cada visita reinicia el

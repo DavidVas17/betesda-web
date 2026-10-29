@@ -260,7 +260,7 @@ def test_bulk_upload_validates_every_image_before_saving_any(client, content_edi
     assert response.status_code == 200
     assert response.context["upload_form"].errors
     assert not album.photos.exists()
-    assert not LogEntry.objects.exists()
+    assert not LogEntry.objects.exclude(change_message__startswith="Inicio de sesión").exists()
 
 
 def test_bulk_upload_rejects_more_than_thirty_files(client, content_editor):
@@ -350,7 +350,7 @@ def test_view_only_permission_renders_disabled_fields_and_blocks_post(
     assert client.post(route, payload).status_code == 403
     obj.refresh_from_db()
     assert (obj.alt_text if section == "photo" else obj.title) != "Cambio no permitido"
-    assert not LogEntry.objects.exists()
+    assert not LogEntry.objects.exclude(change_message__startswith="Inicio de sesión").exists()
 
 
 @pytest.mark.parametrize("section", ["event", "news", "album"])
@@ -368,7 +368,7 @@ def test_content_actions_require_post_and_only_accept_known_actions(
     assert client.post(route, {"action": "delete_everything"}).status_code == 400
     obj.refresh_from_db()
     assert (obj.status == Post.Status.DRAFT) if section == "news" else not obj.is_published
-    assert not LogEntry.objects.exists()
+    assert not LogEntry.objects.exclude(change_message__startswith="Inicio de sesión").exists()
 
 
 def test_duplicate_event_requires_add_permission_too(client, permission_user):

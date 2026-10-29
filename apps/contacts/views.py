@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.db import transaction
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_http_methods, require_POST
 
 from apps.core.schedule import schedule_context
@@ -95,11 +96,17 @@ def _sent(request, mode):
     return redirect(f"{reverse('contacts:contact')}?tipo={mode['slug']}#formulario")
 
 
+# Si algo falla, el reporte de error no debe llevar la petición de la persona.
+PRIVATE_FIELDS = ("name", "email", "phone", "subject", "message")
+
+
+@sensitive_post_parameters(*PRIVATE_FIELDS)
 @require_http_methods(["GET", "POST"])
 def contact(request):
     return _contact(request)
 
 
+@sensitive_post_parameters(*PRIVATE_FIELDS)
 @require_POST
 def send_message(request):
     return _contact(request)

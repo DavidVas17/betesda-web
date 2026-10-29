@@ -411,3 +411,27 @@ def alert_recovery_code_used(user, *, request=None) -> None:
         to=[user.email] if user.email else [],
         bcc=admin_recipients(exclude=user),
     )
+
+
+def alert_messages_exported(actor, total: int, *, request=None) -> None:
+    """Exportar las peticiones saca datos muy privados del sitio: quienes administran lo saben."""
+    send_alert(
+        Email(
+            subject="Se exportaron las peticiones y mensajes",
+            title="Exportación de peticiones y mensajes",
+            paragraphs=[
+                f"{actor.get_full_name() or actor.get_username()} descargó un archivo con "
+                f"{total} solicitud{'es' if total != 1 else ''} del sitio, con nombres, "
+                "correos y mensajes.",
+            ],
+            details=[
+                ("Persona", actor.get_username()),
+                ("Solicitudes", str(total)),
+                ("IP", (client_ip(request) if request else None) or "desconocida"),
+                ("Fecha", now_label()),
+            ],
+            note="El archivo contiene datos personales: debe guardarse en un lugar seguro y "
+            "borrarse cuando ya no se necesite.",
+        ),
+        bcc=admin_recipients(),
+    )

@@ -10,12 +10,15 @@ from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils import timezone
+from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
+from apps.accounts.alerts import alert_messages_exported
 from apps.contacts.models import ContactMessage
 
 from .access import panel_required
 from .forms import MessageFollowupForm
+from .security import recent_auth_required
 from .utils import audit, paginate, pagination_query, panel_render
 
 
@@ -76,6 +79,7 @@ def message_list(request):
     )
 
 
+@sensitive_post_parameters("internal_notes")
 @panel_required("contacts.view_contactmessage")
 @require_http_methods(["GET", "POST"])
 def message_detail(request, pk):
@@ -154,6 +158,7 @@ def message_action(request, pk):
 
 
 @panel_required("contacts.delete_contactmessage")
+@recent_auth_required
 @require_http_methods(["GET", "POST"])
 def message_delete(request, pk):
     item = get_object_or_404(ContactMessage, pk=pk)
@@ -188,9 +193,13 @@ def _csv_value(value):
 
 
 @panel_required("contacts.export_contactmessage")
+@recent_auth_required
 @require_GET
 def message_export(request):
     queryset, *_ = _filtered(request)
+    total = queryset.count()
+    audit(request, request.user, message=f"Exportar {total} solicitudes a CSV.")
+    alert_messages_exported(request.user, total, request=request)
     response = HttpResponse(content_type="text/csv; charset=utf-8")
     response["Content-Disposition"] = 'attachment; filename="solicitudes-betesda.csv"'
     response.write("\ufeff")

@@ -25,3 +25,22 @@ SECURE_HSTS_PRELOAD = True
 
 # Caddy está delante de Django y escribe la IP real del visitante en X-Forwarded-For.
 TRUST_X_FORWARDED_FOR = env.bool("DJANGO_TRUST_X_FORWARDED_FOR", default=True)
+
+# Errores 500 por correo a quien mantiene el sitio. Por defecto, a SECURITY_ALERT_EMAILS.
+# El reporte no incluye contraseñas, cookies ni el contenido de las peticiones de oración
+# (las vistas de contacto marcan esos campos como sensibles).
+ADMINS = [(email, email) for email in env.list("ERROR_EMAILS", default=SECURITY_ALERT_EMAILS)]  # noqa: F405
+SERVER_EMAIL = DEFAULT_FROM_EMAIL  # noqa: F405
+EMAIL_SUBJECT_PREFIX = "[Betesda · Error] "
+LOGGING["handlers"]["mail_admins"] = {  # noqa: F405
+    "class": "django.utils.log.AdminEmailHandler",
+    "level": "ERROR",
+    "include_html": False,
+}
+LOGGING["loggers"] = {  # noqa: F405
+    "django.request": {
+        "handlers": ["console", "mail_admins"],
+        "level": "ERROR",
+        "propagate": False,
+    },
+}

@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
-from django.contrib.auth.signals import user_logged_in
+from django.contrib.auth.signals import user_logged_in, user_logged_out
 from django.db.models.signals import m2m_changed, post_migrate, post_save, pre_save
 from django.dispatch import receiver
 
@@ -27,6 +27,33 @@ def sync_role_groups(sender, using="default", **kwargs) -> None:
 def track_device(sender, request, user, **kwargs) -> None:
     if request is not None:
         remember_device(request, user)
+        log_session_event(request, user, "Inicio de sesión")
+
+
+@receiver(user_logged_out)
+def log_logout(sender, request, user, **kwargs) -> None:
+    if request is not None and user is not None:
+        log_session_event(request, user, "Cierre de sesión")
+
+
+def log_session_event(request, user, what: str) -> None:
+    """Ingresos y salidas en la bitácora, con el navegador y la IP."""
+    from django.contrib.admin.models import CHANGE, LogEntry
+    from django.contrib.contenttypes.models import ContentType
+
+    from apps.core.network import client_ip
+
+    from .alerts import device_label
+
+    label = device_label(request.META.get("HTTP_USER_AGENT", ""))
+    LogEntry.objects.create(
+        user_id=user.pk,
+        content_type=ContentType.objects.get_for_model(user, for_concrete_model=False),
+        object_id=str(user.pk),
+        object_repr=str(user)[:200],
+        action_flag=CHANGE,
+        change_message=f"{what} · {label} · IP {client_ip(request) or 'desconocida'}",
+    )
 
 
 @receiver(m2m_changed, sender=User.groups.through)

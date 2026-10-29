@@ -724,3 +724,4 @@ button[aria-busy='true'] { cursor: progress; opacity: .85; }
 .p-2fa-error { margin: 0; color: var(--p-danger); font-size: .85rem; }
 .p-2fa-codes-actions { margin-top: 4px; }
 @media print { .p-2fa-codes-actions { display: none !important; } }
+.p-failed-logins { margin-top: 24px; }

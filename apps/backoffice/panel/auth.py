@@ -22,7 +22,12 @@ from .forms import (
     PanelSetPasswordForm,
     ProfileForm,
 )
-from .security import PASSWORD_UPGRADE_KEY, require_password_upgrade, start_pending_login
+from .security import (
+    PASSWORD_UPGRADE_KEY,
+    mark_recent_auth,
+    require_password_upgrade,
+    start_pending_login,
+)
 from .utils import audit, panel_render
 
 
@@ -40,6 +45,7 @@ class PanelLoginView(LoginView):
         user = form.get_user()
         if not two_factor.is_enabled(user):
             response = super().form_valid(form)
+            mark_recent_auth(self.request)
             if form.weak_password:
                 require_password_upgrade(self.request)
             return response

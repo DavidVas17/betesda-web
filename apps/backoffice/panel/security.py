@@ -6,6 +6,8 @@ de respaldo, dentro de ``TWO_FACTOR_PENDING_MINUTES``.
 """
 
 import time
+from functools import wraps
+from urllib.parse import urlencode
 
 from django import forms
 from django.conf import settings
@@ -30,6 +32,7 @@ from apps.core.network import client_ip
 
 PENDING_KEY = "two_factor_pending"
 PASSWORD_UPGRADE_KEY = "password_upgrade_required"
+RECENT_AUTH_KEY = "auth_confirmed_at"
 
 
 # --- Ingreso ----------------------------------------------------------------------------------
@@ -107,6 +110,7 @@ def verify(request):
                 clear_failures(key, ip)
                 request.session.pop(PENDING_KEY, None)
                 login(request, user, backend=data["backend"] or None)
+                mark_recent_auth(request)
                 if data.get("weak_password"):
                     require_password_upgrade(request)
                 if method == "respaldo":
@@ -330,3 +334,89 @@ class PasswordUpgradeMiddleware:
             )
             return redirect("panel:password_change")
         return self.get_response(request)
+
+
+# --- Reconfirmar antes de acciones delicadas ---------------------------------------------------
+
+
+def mark_recent_auth(request) -> None:
+    request.session[RECENT_AUTH_KEY] = time.time()
+
+
+def has_recent_auth(request) -> bool:
+    if not settings.RECENT_AUTH_REQUIRED:
+        return True
+    confirmed = request.session.get(RECENT_AUTH_KEY, 0)
+    return time.time() - confirmed < settings.RECENT_AUTH_MINUTES * 60
+
+
+def recent_auth_required(view):
+    """Para exportar datos privados o cambiar cuentas: si la contraseña se escribió hace más
+    de unos minutos, se pide otra vez. Una sesión olvidada abierta no basta."""
+
+    @wraps(view)
+    def wrapped(request, *args, **kwargs):
+        if has_recent_auth(request):
+            return view(request, *args, **kwargs)
+        target = request.get_full_path() if request.method == "GET" else request.path
+        return redirect(f"{reverse('panel:confirm_identity')}?{urlencode({'next': target})}")
+
+    return wrapped
+
+
+class ConfirmIdentityForm(forms.Form):
+    password = forms.CharField(
+        label="Tu contraseña",
+        strip=False,
+        widget=forms.PasswordInput(attrs={"autocomplete": "current-password", "autofocus": True}),
+    )
+
+    def __init__(self, user, *args, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+        if two_factor.is_enabled(user):
+            self.fields["code"] = forms.CharField(
+                label="Código de tu app",
+                max_length=20,
+                widget=forms.TextInput(
+                    attrs={"autocomplete": "one-time-code", "inputmode": "numeric"}
+                ),
+            )
+
+
+@login_required(login_url="panel:login")
+@never_cache
+@require_http_methods(["GET", "POST"])
+def confirm_identity(request):
+    next_url = request.POST.get("next") or request.GET.get("next") or reverse("panel:dashboard")
+    if not url_has_allowed_host_and_scheme(
+        next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    ):
+        next_url = reverse("panel:dashboard")
+    form = ConfirmIdentityForm(request.user, request.POST or None)
+    key, ip = f"sudo:{request.user.get_username()}", client_ip(request)
+    if request.method == "POST" and form.is_valid():
+        wait = seconds_until_allowed(key, ip)
+        ok = (
+            not wait
+            and request.user.check_password(form.cleaned_data["password"])
+            and (
+                "code" not in form.fields
+                or two_factor.verify(request.user, form.cleaned_data["code"]) is not None
+            )
+        )
+        if wait:
+            form.add_error(None, _wait_error(wait))
+        elif not ok:
+            record_failure(key, ip, request=request)
+            form.add_error(None, "La contraseña o el código no son correctos.")
+        else:
+            clear_failures(key, ip)
+            mark_recent_auth(request)
+            return redirect(next_url)
+    return _panel_render(
+        request,
+        "panel/confirm_identity.html",
+        {"form": form, "next": next_url, "minutes": settings.RECENT_AUTH_MINUTES},
+        "Confirma que eres tú",
+    )

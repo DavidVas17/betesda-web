@@ -1,13 +1,16 @@
+from datetime import timedelta
+
 from django.contrib import messages
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import SetPasswordForm
 from django.core.exceptions import PermissionDenied
 from django.db import IntegrityError, transaction
-from django.db.models import Q
+from django.db.models import Count, Max, Q
 from django.db.models.deletion import ProtectedError
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
+from django.utils import timezone
 from django.views.decorators.http import require_GET, require_http_methods
 
 from apps.accounts import two_factor
@@ -16,6 +19,7 @@ from apps.accounts.alerts import (
     alert_password_changed,
     alert_two_factor_changed,
 )
+from apps.accounts.models import LoginAttempt
 from apps.accounts.roles import PRIVILEGED_ROLE_NAMES, ROLE_NAMES
 from apps.contacts.models import ContactMessage
 from apps.core.content import INSTITUTION
@@ -23,6 +27,7 @@ from apps.core.models import SiteConfiguration
 
 from .access import panel_required
 from .forms import SiteSettingsForm, TeamUserCreateForm, TeamUserEditForm
+from .security import recent_auth_required
 from .utils import audit, paginate, pagination_query, panel_render
 
 User = get_user_model()
@@ -240,18 +245,21 @@ def _team_form(request, pk=None):
 
 
 @panel_required(TEAM_PERMISSION)
+@recent_auth_required
 @require_http_methods(["GET", "POST"])
 def user_create(request):
     return _team_form(request)
 
 
 @panel_required(TEAM_PERMISSION)
+@recent_auth_required
 @require_http_methods(["GET", "POST"])
 def user_edit(request, pk):
     return _team_form(request, pk)
 
 
 @panel_required(TEAM_PERMISSION)
+@recent_auth_required
 @require_http_methods(["GET", "POST"])
 def user_two_factor_reset(request, pk):
     """Para quien perdió su teléfono y sus códigos: quita su verificación para configurarla
@@ -287,6 +295,7 @@ def user_two_factor_reset(request, pk):
 
 
 @panel_required(TEAM_PERMISSION)
+@recent_auth_required
 @require_http_methods(["GET", "POST"])
 def user_delete(request, pk):
     user = _team_member(request, pk, allow_self=False)
@@ -322,6 +331,7 @@ def user_delete(request, pk):
 
 
 @panel_required(TEAM_PERMISSION)
+@recent_auth_required
 @require_http_methods(["GET", "POST"])
 def user_password(request, pk):
     # La contraseña propia se cambia desde "Mi cuenta", pidiendo la actual.
@@ -350,6 +360,17 @@ def user_password(request, pk):
     )
 
 
+def _recent_failed_logins(days: int = 7):
+    """Intentos fallidos de la última semana, agrupados por cuenta y conexión."""
+    since = timezone.now() - timedelta(days=days)
+    return (
+        LoginAttempt.objects.filter(created_at__gte=since)
+        .values("username", "ip_address")
+        .annotate(total=Count("pk"), last=Max("created_at"))
+        .order_by("-last")[:15]
+    )
+
+
 @panel_required("accounts.view_activity")
 @require_GET
 def activity(request):
@@ -370,6 +391,7 @@ def activity(request):
             "page_obj": paginate(request, entries, 20),
             "query": query,
             "pagination_query": pagination_query(request),
+            "failed_logins": _recent_failed_logins(),
         },
         active="activity",
         title="Actividad",

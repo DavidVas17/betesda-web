@@ -18,3 +18,5 @@ STORAGES = {
 TWO_FACTOR_ENFORCE = False
 # La trampa de tiempo se prueba aparte; el resto de pruebas envía el formulario al instante.
 CONTACT_TIME_TRAP = None
+# La reconfirmación se prueba aparte (tests/test_recent_auth.py).
+RECENT_AUTH_REQUIRED = False

@@ -55,6 +55,15 @@ jobs:
           context: .
           target: production
           push: false
+          load: true
+          tags: betesda-web:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
+      # Vulnerabilidades críticas con parche disponible en la imagen (sistema y Python).
+      # Las que aún no tienen arreglo no bloquean: no hay nada que actualizar todavía.
+      - name: Escanear la imagen con Trivy
+        run: >
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock
+          aquasec/trivy:0.56.2 image --no-progress --scanners vuln
+          --severity CRITICAL --ignore-unfixed --exit-code 1 betesda-web:ci
 
