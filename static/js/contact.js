@@ -64,3 +64,8 @@
     panel.setAttribute('aria-labelledby', tabs.find(tab => tab.dataset.contactMode === initial).id);
   }
 })();
+(() => {
+  // Tras enviar, lleva la atención al mensaje de agradecimiento.
+  const success = document.querySelector('[data-contact-success]');
+  if (success) success.focus();
+})();

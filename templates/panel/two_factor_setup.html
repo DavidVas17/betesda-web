@@ -1,0 +1,22 @@
+{% extends 'panel/base.html' %}
+{% load static %}
+{% block content %}
+{% include 'panel/heading.html' with heading='Verificación en dos pasos' intro='Además de tu contraseña, el panel te pedirá un código de tu teléfono. Aunque alguien conozca tu contraseña, no podrá entrar.' %}
+{% if required %}<div class="p-notice p-notice-info" role="status">Tu rol administra el sitio, por eso la verificación en dos pasos es obligatoria. Actívala para seguir usando el panel.</div>{% endif %}
+<div class="p-editor-layout">
+  <section class="p-card p-form-card p-2fa-setup">
+    <ol class="p-2fa-steps">
+      <li><strong>Instala una app de verificación</strong><span>Google Authenticator, Microsoft Authenticator o Authy. Son gratuitas.</span></li>
+      <li><strong>Escanea este código</strong><span>En la app, toca "Agregar" y elige escanear un código QR.</span>
+        <div class="p-2fa-qr" data-otpauth="{{ otpauth_uri }}"><span class="p-muted">Si el código no aparece, usa la clave de abajo.</span></div>
+        <details class="p-2fa-manual"><summary>¿No puedes escanear? Escribe la clave</summary><p>Elige "Ingresar una clave de configuración", usa tu usuario como nombre y escribe:</p><code class="p-2fa-secret" id="clave-2fa">{{ secret }}</code><button class="p-button p-button-secondary p-button-small" type="button" data-copy-target="clave-2fa" hidden>Copiar clave</button></details>
+      </li>
+      <li><strong>Escribe el código que muestra la app</strong><span>Cambia cada 30 segundos.</span>
+        <form method="post" class="p-2fa-form" data-enhanced-form data-no-counter data-loading-label="Verificando…">{% csrf_token %}{% with field=form.code %}<label class="p-2fa-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% if field.errors %}<p class="p-2fa-error" role="alert">{{ field.errors.0 }}</p>{% endif %}{% endwith %}<div class="p-security-actions"><button class="p-button p-button-primary" type="submit">{% include 'panel/icon.html' with name='check' %}Activar verificación</button>{% if not required %}<a class="p-button p-button-secondary" href="{% url 'panel:account' %}">Ahora no</a>{% endif %}</div></form>
+      </li>
+    </ol>
+  </section>
+  <aside class="p-card p-helper-card"><span class="p-helper-icon">{% include 'panel/icon.html' with name='lock' %}</span><h2>¿Por qué?</h2><p>La mayoría de cuentas robadas caen porque alguien adivinó, reutilizó o vio la contraseña. Con el código del teléfono eso ya no basta para entrar.</p><div class="p-helper-divider"></div><strong>Al terminar</strong><p>Te daremos 10 códigos de respaldo por si pierdes el teléfono. Guárdalos en un lugar seguro.</p></aside>
+</div>
+<script src="{% static 'vendor/qrcode-generator/qrcode.js' %}" defer></script><script src="{% static 'panel/js/two_factor.js' %}" defer></script>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends 'panel/base.html' %}
+{% block content %}
+{% include 'panel/heading.html' with heading='Guía rápida' intro='Cómo hacer cada tarea del panel, paso a paso. Solo ves lo que tu rol permite.' %}
+<nav class="p-guide-index" aria-label="Temas de la guía">{% for item in topics %}<a href="#{{ item.topic.key }}">{% include 'panel/icon.html' with name=item.topic.icon %}{{ item.topic.title }}</a>{% endfor %}</nav>
+<div class="p-guide">
+{% for item in topics %}{% with topic=item.topic %}
+  <section class="p-card p-guide-topic" id="{{ topic.key }}" aria-labelledby="{{ topic.key }}-titulo">
+    <header><span class="p-helper-icon">{% include 'panel/icon.html' with name=topic.icon %}</span><div><h2 id="{{ topic.key }}-titulo">{{ topic.title }}</h2><p>{{ topic.summary }}</p></div></header>
+    <ol class="p-guide-steps">{% for step in topic.steps %}<li>{{ step }}</li>{% endfor %}</ol>
+    {% if topic.tips %}<ul class="p-guide-tips">{% for tip in topic.tips %}<li>{{ tip }}</li>{% endfor %}</ul>{% endif %}
+    {% if item.url %}<a class="p-button p-button-secondary p-button-small" href="{{ item.url }}">{{ topic.link.0 }} {% include 'panel/icon.html' with name='arrow' %}</a>{% endif %}
+  </section>
+{% endwith %}{% endfor %}
+</div>
+<p class="p-muted p-small p-guide-footer">¿Algo no está aquí? Pregunta al administrador de la iglesia.</p>
+{% endblock %}

@@ -1,5 +1,4 @@
 import csv
-from urllib.parse import quote, urlencode
 
 from django.contrib import messages
 from django.contrib.admin.models import DELETION
@@ -10,12 +9,16 @@ from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils import timezone
+from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
+from apps.accounts.alerts import alert_messages_exported
+from apps.contacts import replies
 from apps.contacts.models import ContactMessage
 
 from .access import panel_required
 from .forms import MessageFollowupForm
+from .security import recent_auth_required
 from .utils import audit, paginate, pagination_query, panel_render
 
 
@@ -65,7 +68,7 @@ def message_list(request):
             "kind_choices": (("all", "Todas las solicitudes"), *ContactMessage.Kind.choices),
             "can_change": request.user.has_perm("contacts.change_contactmessage"),
             "can_delete": request.user.has_perm("contacts.delete_contactmessage"),
-            "can_export": True,
+            "can_export": request.user.has_perm("contacts.export_contactmessage"),
             "counts": counts,
             "pagination_query": pagination_query(request),
             "export_url": reverse("panel:message_export") + "?" + request.GET.urlencode(),
@@ -76,6 +79,7 @@ def message_list(request):
     )
 
 
+@sensitive_post_parameters("internal_notes")
 @panel_required("contacts.view_contactmessage")
 @require_http_methods(["GET", "POST"])
 def message_detail(request, pk):
@@ -117,8 +121,15 @@ def message_detail(request, pk):
             "form": form,
             "can_change": can_change,
             "can_delete": request.user.has_perm("contacts.delete_contactmessage"),
-            "reply_url": f"mailto:{quote(item.email, safe='@')}?"
-            + urlencode({"subject": f"Re: {item.subject}"}),
+            "reply_url": replies.mailto(item),
+            "reply_options": replies.options(
+                item, request.user, request.build_absolute_uri(reverse("contacts:contact"))
+            ),
+            "whatsapp_url": (
+                f"https://wa.me/{replies.whatsapp_number(item.phone)}"
+                if replies.whatsapp_number(item.phone)
+                else ""
+            ),
             "phone_url": f"tel:+{phone}" if phone else "",
         },
         active="messages",
@@ -127,7 +138,7 @@ def message_detail(request, pk):
     )
 
 
-@panel_required(("contacts.view_contactmessage",))
+@panel_required("contacts.change_contactmessage")
 @require_POST
 def message_action(request, pk):
     if not request.user.has_perm("contacts.change_contactmessage"):
@@ -154,6 +165,7 @@ def message_action(request, pk):
 
 
 @panel_required("contacts.delete_contactmessage")
+@recent_auth_required
 @require_http_methods(["GET", "POST"])
 def message_delete(request, pk):
     item = get_object_or_404(ContactMessage, pk=pk)
@@ -187,10 +199,14 @@ def _csv_value(value):
     return text
 
 
-@panel_required("contacts.view_contactmessage")
+@panel_required("contacts.export_contactmessage")
+@recent_auth_required
 @require_GET
 def message_export(request):
     queryset, *_ = _filtered(request)
+    total = queryset.count()
+    audit(request, request.user, message=f"Exportar {total} solicitudes a CSV.")
+    alert_messages_exported(request.user, total, request=request)
     response = HttpResponse(content_type="text/csv; charset=utf-8")
     response["Content-Disposition"] = 'attachment; filename="solicitudes-betesda.csv"'
     response.write("\ufeff")

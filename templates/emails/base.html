@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light">
+<title>{{ email.subject }}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f4f3ef;-webkit-text-size-adjust:100%;">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#f4f3ef;font-size:1px;line-height:1px;">{{ preheader }}&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f4f3ef;">
+  <tr><td align="center" style="padding:32px 16px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;">
+
+      <tr><td style="background-color:#111111;border-radius:16px 16px 0 0;padding:28px 36px 24px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+          <td style="font-family:Georgia,'Times New Roman',serif;font-size:22px;line-height:26px;color:#f5f3ee;letter-spacing:.2px;">Betesda</td>
+          <td align="right" style="font-family:Helvetica,Arial,sans-serif;font-size:11px;line-height:16px;letter-spacing:2px;text-transform:uppercase;color:#d8b670;">Rosa de Sarón</td>
+        </tr></table>
+        <div style="margin-top:18px;height:2px;width:48px;background-color:#b8913a;line-height:2px;font-size:2px;">&nbsp;</div>
+      </td></tr>
+
+      {% if email.tone == 'alert' %}<tr><td style="background-color:#f4eddd;padding:12px 36px;font-family:Helvetica,Arial,sans-serif;font-size:12px;line-height:18px;letter-spacing:1.4px;text-transform:uppercase;color:#82641f;font-weight:bold;">Aviso de seguridad</td></tr>{% endif %}
+
+      <tr><td style="background-color:#ffffff;padding:36px 36px 8px;">
+        <p style="margin:0 0 10px;font-family:Helvetica,Arial,sans-serif;font-size:11px;line-height:16px;letter-spacing:1.8px;text-transform:uppercase;color:#82641f;font-weight:bold;">{{ email.eyebrow }}</p>
+        <h1 style="margin:0 0 20px;font-family:Georgia,'Times New Roman',serif;font-size:26px;line-height:32px;font-weight:normal;color:#111111;">{{ email.title }}</h1>
+        {% for paragraph in email.paragraphs %}<p style="margin:0 0 16px;font-family:Helvetica,Arial,sans-serif;font-size:15px;line-height:24px;color:#2b2a27;">{{ paragraph|linebreaksbr }}</p>{% endfor %}
+      </td></tr>
+
+      {% if email.details %}<tr><td style="background-color:#ffffff;padding:4px 36px 12px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f7f6f2;border-radius:12px;">
+          {% for label, value in email.details %}<tr>
+            <td style="padding:{% if forloop.first %}16px{% else %}10px{% endif %} 20px {% if forloop.last %}16px{% else %}10px{% endif %};font-family:Helvetica,Arial,sans-serif;font-size:12px;line-height:18px;letter-spacing:.6px;text-transform:uppercase;color:#66635c;width:38%;vertical-align:top;{% if not forloop.first %}border-top:1px solid #e9e6de;{% endif %}">{{ label }}</td>
+            <td style="padding:{% if forloop.first %}16px{% else %}10px{% endif %} 20px {% if forloop.last %}16px{% else %}10px{% endif %} 0;font-family:Helvetica,Arial,sans-serif;font-size:14px;line-height:20px;color:#111111;vertical-align:top;{% if not forloop.first %}border-top:1px solid #e9e6de;{% endif %}">{{ value }}</td>
+          </tr>{% endfor %}
+        </table>
+      </td></tr>{% endif %}
+
+      {% if email.button %}<tr><td style="background-color:#ffffff;padding:16px 36px 8px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+          <td style="border-radius:999px;background-color:#111111;">
+            <a href="{{ email.button.1 }}" style="display:inline-block;padding:14px 28px;font-family:Helvetica,Arial,sans-serif;font-size:15px;line-height:20px;font-weight:bold;color:#ffffff;text-decoration:none;border-radius:999px;">{{ email.button.0 }} &nbsp;&rarr;</a>
+          </td>
+        </tr></table>
+        <p style="margin:14px 0 0;font-family:Helvetica,Arial,sans-serif;font-size:12px;line-height:18px;color:#66635c;">¿El botón no funciona? Copia este enlace en tu navegador:<br><a href="{{ email.button.1 }}" style="color:#82641f;word-break:break-all;">{{ email.button.1 }}</a></p>
+      </td></tr>{% endif %}
+
+      {% if email.note %}<tr><td style="background-color:#ffffff;padding:20px 36px 4px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+          <td style="border-left:3px solid #b8913a;padding:4px 0 4px 16px;font-family:Helvetica,Arial,sans-serif;font-size:14px;line-height:22px;color:#2b2a27;">{{ email.note|linebreaksbr }}</td>
+        </tr></table>
+      </td></tr>{% endif %}
+
+      <tr><td style="background-color:#ffffff;border-radius:0 0 16px 16px;padding:28px 36px 32px;">
+        <div style="height:1px;background-color:#e9e6de;line-height:1px;font-size:1px;">&nbsp;</div>
+        <p style="margin:20px 0 0;font-family:Helvetica,Arial,sans-serif;font-size:12px;line-height:19px;color:#66635c;">{{ email.footer|default:'Correo automático del sitio de la iglesia.'|linebreaksbr }}</p>
+      </td></tr>
+
+      <tr><td align="center" style="padding:22px 16px 0;font-family:Helvetica,Arial,sans-serif;font-size:11px;line-height:17px;color:#8a867d;">Betesda Rosa de Sarón · Villa Nueva, Guatemala<br>Amando a Dios, unidos en Cristo y sirviendo a nuestra comunidad.</td></tr>
+
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>

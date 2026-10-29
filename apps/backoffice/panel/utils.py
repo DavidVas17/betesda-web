@@ -22,6 +22,7 @@ def panel_context(request, active="dashboard", title="Inicio", subtitle=""):
         ("Noticias", "news_list", "news", "news.view_post"),
         ("Galería", "album_list", "image", "gallery.view_album"),
         ("Mensajes", "message_list", "inbox", "contacts.view_contactmessage"),
+        ("Nuestra iglesia", "institution", "church", "core.view_ministry"),
         ("Configuración", "settings", "settings", "core.view_siteconfiguration"),
     ]
     navigation = []
@@ -31,6 +32,7 @@ def panel_context(request, active="dashboard", title="Inicio", subtitle=""):
         "album_list": "gallery",
         "message_list": "messages",
         "settings": "settings",
+        "institution": "institution",
         "dashboard": "dashboard",
     }
     for label, route, icon, permission in sections:
@@ -51,11 +53,11 @@ def panel_context(request, active="dashboard", title="Inicio", subtitle=""):
                     "badge": new_messages if route == "message_list" else 0,
                 }
             )
-    if user.is_superuser:
-        for label, route, icon in (
-            ("Usuarios", "user_list", "users"),
-            ("Actividad", "activity", "activity"),
-        ):
+    for label, route, icon, permission in (
+        ("Usuarios", "user_list", "users", "accounts.manage_team"),
+        ("Actividad", "activity", "activity", "accounts.view_activity"),
+    ):
+        if user.has_perm(permission):
             navigation.append(
                 {
                     "label": label,
@@ -94,11 +96,14 @@ def pagination_query(request):
     return parameters.urlencode()
 
 
-def audit(request, obj, flag=CHANGE, message="Actualización desde el panel"):
-    """Registra la operación sin contraseñas ni el cuerpo de solicitudes privadas."""
+def audit(request, obj, flag=CHANGE, message="Actualización desde el panel", actor=None):
+    """Registra la operación sin contraseñas ni el cuerpo de solicitudes privadas.
+
+    ``actor`` sirve cuando no hay sesión iniciada (por ejemplo, al restablecer la contraseña).
+    """
     description = f"Solicitud #{obj.pk}" if isinstance(obj, ContactMessage) else str(obj)
     return LogEntry.objects.create(
-        user_id=request.user.pk,
+        user_id=(actor or request.user).pk,
         content_type=ContentType.objects.get_for_model(obj, for_concrete_model=False),
         object_id=str(obj.pk),
         object_repr=description[:200],

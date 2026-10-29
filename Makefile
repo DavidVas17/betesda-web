@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 
-.PHONY: help setup up down logs shell migrate migrations test lint format check admin roles backup restore prod-up
+.PHONY: help setup up down logs shell migrate migrations test lint format check admin roles images purge backup backup-media restore restore-media prod-up
 
 help:
 	@awk 'BEGIN {FS = ":.*##"; printf "\nComandos disponibles:\n"} /^[a-zA-Z_-]+:.*?##/ {printf "  %-16s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -45,15 +45,38 @@ check: ## Ejecuta las verificaciones antes de un PR
 	docker compose exec web python manage.py makemigrations --check --dry-run
 	docker compose exec web pytest
 
-admin: ## Crea o actualiza el administrador definido en .env
+admin: ## Crea el administrador del .env (si existe, actualiza su correo sin tocar la contraseña)
 	docker compose exec web python manage.py bootstrap_admin
 
-roles: ## Aplica los permisos de cada rol (Administradores / Editores)
+roles: ## Aplica los permisos de cada rol definidos en apps/accounts/roles.py
 	docker compose exec web python manage.py setup_roles
 
 backup: ## Crea un respaldo fechado de PostgreSQL en ./backups
 	@mkdir -p backups
 	docker compose exec -T db pg_dump -U "$${POSTGRES_USER:-betesda}" -d "$${POSTGRES_DB:-betesda}" -Fc > "backups/betesda-$$(date +%Y%m%d-%H%M%S).dump"
+
+backup-media: ## Respalda las fotos e imágenes subidas en ./backups
+	@mkdir -p backups
+	docker compose exec -T web tar -czf - -C /app media > "backups/media-$$(date +%Y%m%d-%H%M%S).tar.gz"
+
+restore: ## Restaura la base de datos: make restore FILE=backups/x.dump CONFIRMAR=si
+	@test -n "$(FILE)" || (echo "Indica el respaldo: make restore FILE=backups/archivo.dump CONFIRMAR=si" && exit 1)
+	@test -f "$(FILE)" || (echo "No existe el archivo $(FILE)" && exit 1)
+	@test "$(CONFIRMAR)" = "si" || (echo "Esto reemplaza los datos actuales. Repite con CONFIRMAR=si" && exit 1)
+	docker compose exec -T db pg_restore --clean --if-exists --no-owner -U "$${POSTGRES_USER:-betesda}" -d "$${POSTGRES_DB:-betesda}" < "$(FILE)"
+	docker compose exec web python manage.py migrate --noinput
+
+restore-media: ## Restaura las imágenes: make restore-media FILE=backups/media-x.tar.gz CONFIRMAR=si
+	@test -n "$(FILE)" || (echo "Indica el respaldo: make restore-media FILE=backups/media-x.tar.gz CONFIRMAR=si" && exit 1)
+	@test -f "$(FILE)" || (echo "No existe el archivo $(FILE)" && exit 1)
+	@test "$(CONFIRMAR)" = "si" || (echo "Esto reemplaza las imágenes actuales. Repite con CONFIRMAR=si" && exit 1)
+	docker compose exec -T web tar -xzf - -C /app < "$(FILE)"
+
+images: ## Crea las versiones WebP que falten de las imágenes subidas
+	docker compose exec web python manage.py generate_image_variants
+
+purge: ## Elimina mensajes vencidos (prueba primero: make purge ARGS=--dry-run)
+	docker compose exec web python manage.py purge_old_messages $(ARGS)
 
 prod-up: ## Inicia la configuracion de produccion
 	docker compose -f compose.prod.yaml up --build -d

@@ -26,4 +26,3 @@ def test_event_generates_slug():
     event.save()
 
     assert event.slug == "servicio-de-familia"
-

@@ -3,6 +3,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_GET
 
+from apps.accounts import two_factor
 from apps.contacts.models import ContactMessage
 from apps.events.models import Event
 from apps.gallery.models import Album
@@ -10,6 +11,22 @@ from apps.news.models import Post
 
 from .access import panel_required
 from .utils import panel_render, query_url
+
+
+def _first_steps(user):
+    """Lista para quien recién llega. Desaparece cuando todo está hecho."""
+    steps = [
+        ("Escribe tu nombre", bool(user.first_name), reverse("panel:account")),
+        ("Guarda tu correo para recibir avisos", bool(user.email), reverse("panel:account")),
+        (
+            "Activa la verificación en dos pasos",
+            two_factor.is_enabled(user),
+            reverse("panel:two_factor_setup"),
+        ),
+    ]
+    if all(done for _, done, _ in steps):
+        return None
+    return [{"label": label, "done": done, "url": url} for label, done, url in steps]
 
 
 @panel_required()
@@ -117,6 +134,7 @@ def dashboard(request):
         request,
         "panel/dashboard.html",
         {
+            "first_steps": _first_steps(request.user),
             "kpis": kpis,
             "quick_actions": quick_actions,
             "recent_messages": recent_messages,
@@ -125,7 +143,7 @@ def dashboard(request):
             "recent_activity": LogEntry.objects.select_related("user", "content_type").order_by(
                 "-action_time", "-pk"
             )[:5]
-            if user.is_superuser
+            if user.has_perm("accounts.view_activity")
             else [],
             "greeting": f"Hola, {user.first_name or user.username}",
             "today": timezone.localdate(),

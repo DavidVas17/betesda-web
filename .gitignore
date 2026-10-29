@@ -1,3 +1,7 @@
+# Variables de entorno: cada quien crea su .env a partir de .env.example.
+# Nunca confirmes .env: contiene claves y contraseñas.
+.env
+.env.*
 !.env.example
 
 # Python

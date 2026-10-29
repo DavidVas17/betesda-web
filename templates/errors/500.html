@@ -1,4 +1,4 @@
 {% extends "base.html" %}
 {% block title %}Error temporal{% endblock %}
-{% block content %}<section class="error-page"><h1>No pudimos completar la solicitud</h1><p>Intentelo nuevamente dentro de unos minutos.</p></section>{% endblock %}
+{% block content %}<section class="error-page"><p class="eyebrow">Error 500</p><h1>No pudimos completar la solicitud</h1><p>Inténtelo nuevamente dentro de unos minutos.</p><a class="button button-primary" href="/">Volver al inicio {% include 'includes/icon.html' with name='arrow' %}</a></section>{% endblock %}
 

@@ -1,0 +1,5 @@
+{% extends 'panel/base.html' %}
+{% block content %}
+{% include 'panel/heading.html' with heading=form_title intro=form_intro %}
+<section class="p-card p-form-card p-narrow-card"><p class="p-muted">Para confirmar que eres tú, escribe tu contraseña y un código de tu app.</p><form method="post" class="p-form" data-enhanced-form data-no-counter>{% csrf_token %}{% include 'panel/fields.html' %}<div class="p-form-actions"><button class="p-button {% if danger %}p-button-danger{% else %}p-button-primary{% endif %}" type="submit">{{ submit_label }}</button><a class="p-button p-button-secondary" href="{% url 'panel:account' %}">Cancelar</a></div></form></section>
+{% endblock %}

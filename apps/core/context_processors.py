@@ -8,6 +8,7 @@ from .models import SiteConfiguration
 
 
 def public_site(request):
+    canonical_url = request.build_absolute_uri(request.path)
     site = INSTITUTION.copy()
     try:
         configuration = SiteConfiguration.objects.first()
@@ -21,6 +22,10 @@ def public_site(request):
             ("email", "email"),
             ("address", "address"),
             ("facebook_url", "facebook_url"),
+            ("mission", "mission"),
+            ("vision", "vision"),
+            ("purpose", "purpose"),
+            ("history", "history"),
         ):
             if value := getattr(configuration, source):
                 site[destination] = value
@@ -58,4 +63,4 @@ def public_site(request):
         if namespace == "core":
             active = active and match.url_name == name
         navigation.append({"label": label, "url": reverse(route), "active": active})
-    return {"site": site, "navigation": navigation}
+    return {"site": site, "navigation": navigation, "canonical_url": canonical_url}

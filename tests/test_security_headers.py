@@ -1,0 +1,125 @@
+"""Cabeceras de seguridad en las respuestas."""
+
+import re
+from pathlib import Path
+
+import pytest
+from django.test import Client, override_settings
+from django.urls import reverse
+
+from apps.core.middleware import SecurityHeadersMiddleware
+
+pytestmark = pytest.mark.django_db
+TEMPLATES = Path(__file__).resolve().parents[1] / "templates"
+
+
+def test_pages_send_a_strict_content_security_policy(client):
+    policy = client.get("/").headers["Content-Security-Policy"]
+
+    assert "default-src 'self'" in policy
+    assert "script-src 'self'" in policy
+    assert "unsafe-inline" not in policy
+    assert "frame-ancestors 'none'" in policy
+    assert "object-src 'none'" in policy
+
+
+def test_browser_features_the_site_never_uses_are_disabled(client):
+    header = client.get("/").headers["Permissions-Policy"]
+
+    assert "camera=()" in header and "geolocation=()" in header
+
+
+@override_settings(CSP_REPORT_ONLY=True)
+def test_report_only_mode_does_not_block():
+    response = Client().get("/")
+
+    assert "Content-Security-Policy-Report-Only" in response.headers
+    assert "Content-Security-Policy" not in response.headers
+
+
+def test_middleware_keeps_a_policy_set_by_the_view(rf, settings):
+    def view(request):
+        from django.http import HttpResponse
+
+        response = HttpResponse()
+        response.headers["Content-Security-Policy"] = "default-src 'none'"
+        return response
+
+    response = SecurityHeadersMiddleware(view)(rf.get("/"))
+
+    assert response.headers["Content-Security-Policy"] == "default-src 'none'"
+
+
+def test_templates_have_no_inline_code_that_the_policy_would_block():
+    """Si alguien agrega un <script> o un style="" en línea, el navegador lo bloquearía."""
+    offenders = []
+    for path in TEMPLATES.rglob("*.html"):
+        if "emails" in path.parts:
+            continue  # los correos no son páginas: los clientes de correo exigen estilos en línea
+        text = path.read_text(encoding="utf-8")
+        for script in re.findall(r"<script\b[^>]*>", text):
+            if (
+                "src=" not in script
+                and "application/json" not in script
+                and "ld+json" not in script
+            ):
+                offenders.append(f"{path.name}: {script}")
+        if re.search(r"\sstyle=\"|<style\b|\son[a-z]+=\"", text):
+            offenders.append(f"{path.name}: estilo o evento en línea")
+    assert offenders == []
+
+
+def test_panel_is_never_indexed(client):
+    assert client.get(reverse("panel:login")).headers["X-Robots-Tag"] == "noindex, nofollow"
+    assert "X-Robots-Tag" not in client.get("/").headers
+
+
+def test_resources_cannot_be_embedded_elsewhere(client):
+    assert client.get("/").headers["Cross-Origin-Resource-Policy"] == "same-origin"
+
+
+def test_robots_hides_the_panel_but_not_the_admin_path(client, settings):
+    content = client.get("/robots.txt").content.decode()
+
+    assert "Disallow: /panel/" in content
+    assert settings.ADMIN_URL not in content
+
+
+def test_security_txt(client, settings):
+    assert client.get("/.well-known/security.txt").status_code == 404
+
+    settings.SECURITY_CONTACT_EMAIL = "seguridad@example.com"
+    content = client.get("/.well-known/security.txt").content.decode()
+
+    assert "Contact: mailto:seguridad@example.com" in content
+    assert "Expires: " in content and content.count("\n") >= 4
+
+
+def test_short_passwords_are_rejected():
+    from django.contrib.auth.password_validation import validate_password
+    from django.core.exceptions import ValidationError
+
+    with pytest.raises(ValidationError):
+        validate_password("Corta-123")
+
+
+def test_dev_warns_about_pending_migrations(rf, monkeypatch):
+    from django.http import HttpResponse
+
+    from apps.core.middleware import PendingMigrationsMiddleware
+
+    middleware = PendingMigrationsMiddleware(lambda request: HttpResponse("ok"))
+    monkeypatch.setattr(middleware, "_pending", lambda: ["accounts.0006_verificacion"])
+    response = middleware(rf.get("/"))
+    assert response.status_code == 503
+    assert b"accounts.0006_verificacion" in response.content
+    assert b"python manage.py migrate" in response.content
+
+    monkeypatch.setattr(middleware, "_pending", lambda: [])
+    assert middleware(rf.get("/")).content == b"ok"
+
+
+def test_pending_migrations_check_runs_against_the_real_database():
+    from apps.core.middleware import PendingMigrationsMiddleware
+
+    assert PendingMigrationsMiddleware._pending() == []

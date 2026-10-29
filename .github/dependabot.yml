@@ -1,0 +1,41 @@
+# Dependabot abre un PR cuando sale una versión nueva (o un parche de seguridad) de una
+# dependencia. Las pruebas del CI deciden si el cambio se puede mezclar.
+version: 2
+updates:
+  - package-ecosystem: "uv"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      timezone: "America/Guatemala"
+    open-pull-requests-limit: 5
+    labels: ["dependencias"]
+    groups:
+      django-y-servidor:
+        patterns: ["Django", "django-*", "gunicorn", "whitenoise", "psycopg*", "Pillow"]
+        update-types: ["patch", "minor"]
+      herramientas-de-desarrollo:
+        dependency-type: "development"
+        update-types: ["patch", "minor"]
+
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      timezone: "America/Guatemala"
+    labels: ["dependencias"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    labels: ["dependencias"]
+
+  - package-ecosystem: "docker-compose"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      timezone: "America/Guatemala"
+    labels: ["dependencias"]

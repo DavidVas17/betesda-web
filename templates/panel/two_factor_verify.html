@@ -1,0 +1,5 @@
+{% extends 'panel/auth_base.html' %}
+{% block title %}Verificación en dos pasos{% endblock %}
+{% block heading %}Un paso más{% endblock %}
+{% block intro %}Abre tu app de verificación y escribe el código de 6 números que aparece para Betesda Rosa de Sarón.{% endblock %}
+{% block content %}<form method="post" class="p-form p-login-form" data-enhanced-form data-no-counter data-loading-label="Verificando…">{% csrf_token %}{% include 'panel/fields.html' %}<button class="p-button p-button-primary p-button-full" type="submit">Verificar e ingresar {% include 'panel/icon.html' with name='arrow' %}</button></form><p class="p-login-help">¿No tienes tu teléfono? Escribe uno de tus códigos de respaldo. Si tampoco los tienes, pide al administrador de la iglesia que restablezca tu verificación.</p><a class="p-text-link" href="{% url 'panel:login' %}">Volver a iniciar sesión</a>{% endblock %}

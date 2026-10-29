@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import auth, content, dashboard, messages, operations
+from . import auth, content, dashboard, guide, institution, messages, operations, security
 
 app_name = "panel"
 
@@ -8,6 +8,17 @@ urlpatterns = [
     path("", dashboard.dashboard, name="dashboard"),
     path("ingresar/", auth.PanelLoginView.as_view(), name="login"),
     path("salir/", auth.logout_view, name="logout"),
+    path("recuperar/", auth.PanelPasswordResetView.as_view(), name="password_reset"),
+    path(
+        "recuperar/enviado/",
+        auth.PanelPasswordResetDoneView.as_view(),
+        name="password_reset_done",
+    ),
+    path(
+        "recuperar/<uidb64>/<token>/",
+        auth.PanelPasswordResetConfirmView.as_view(),
+        name="password_reset_confirm",
+    ),
     path("eventos/", content.event_list, name="event_list"),
     path("eventos/nuevo/", content.event_create, name="event_create"),
     path("eventos/<int:pk>/editar/", content.event_edit, name="event_edit"),
@@ -34,6 +45,14 @@ urlpatterns = [
     path("mensajes/<int:pk>/accion/", messages.message_action, name="message_action"),
     path("mensajes/<int:pk>/eliminar/", messages.message_delete, name="message_delete"),
     path("configuracion/", operations.settings, name="settings"),
+    path("nuestra-iglesia/", institution.overview, name="institution"),
+    path("nuestra-iglesia/<slug:kind>/nuevo/", institution.create, name="institution_create"),
+    path("nuestra-iglesia/<slug:kind>/<int:pk>/", institution.edit, name="institution_edit"),
+    path(
+        "nuestra-iglesia/<slug:kind>/<int:pk>/eliminar/",
+        institution.delete,
+        name="institution_delete",
+    ),
     path("usuarios/", operations.user_list, name="user_list"),
     path("usuarios/nuevo/", operations.user_create, name="user_create"),
     path("usuarios/<int:pk>/editar/", operations.user_edit, name="user_edit"),
@@ -41,5 +60,17 @@ urlpatterns = [
     path("usuarios/<int:pk>/contrasena/", operations.user_password, name="user_password"),
     path("actividad/", operations.activity, name="activity"),
     path("cuenta/", auth.account, name="account"),
+    path("guia/", guide.guide, name="guide"),
     path("cuenta/contrasena/", auth.password_change, name="password_change"),
+    path("cuenta/cerrar-otras-sesiones/", auth.logout_others, name="logout_others"),
+    path("ingresar/verificar/", security.verify, name="two_factor_verify"),
+    path("confirmar/", security.confirm_identity, name="confirm_identity"),
+    path("cuenta/verificacion/", security.setup, name="two_factor_setup"),
+    path("cuenta/verificacion/codigos/", security.regenerate_codes, name="two_factor_codes"),
+    path("cuenta/verificacion/desactivar/", security.disable, name="two_factor_disable"),
+    path(
+        "usuarios/<int:pk>/verificacion/restablecer/",
+        operations.user_two_factor_reset,
+        name="user_two_factor_reset",
+    ),
 ]

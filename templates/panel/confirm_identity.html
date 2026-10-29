@@ -1,0 +1,5 @@
+{% extends 'panel/base.html' %}
+{% block content %}
+{% include 'panel/heading.html' with heading='Confirma que eres tú' intro='Vas a hacer algo delicado, como exportar datos privados o cambiar una cuenta del equipo.' %}
+<section class="p-card p-form-card p-narrow-card"><p class="p-muted">Por seguridad, lo pedimos si escribiste tu contraseña hace más de {{ minutes }} minutos. No lo volveremos a pedir por un rato.</p><form method="post" class="p-form" data-enhanced-form data-no-counter data-loading-label="Confirmando…">{% csrf_token %}<input type="hidden" name="next" value="{{ next }}">{% include 'panel/fields.html' %}<div class="p-form-actions"><button class="p-button p-button-primary" type="submit">{% include 'panel/icon.html' with name='lock' %}Confirmar y continuar</button><a class="p-button p-button-secondary" href="{% url 'panel:dashboard' %}">Cancelar</a></div></form></section>
+{% endblock %}

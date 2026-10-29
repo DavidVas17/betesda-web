@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.conf import settings
 from django.db import models
 
@@ -47,6 +49,18 @@ class ContactMessage(TimeStampedModel):
         indexes = [models.Index(fields=("status", "created_at"), name="contact_status_date_idx")]
         verbose_name = "mensaje de contacto"
         verbose_name_plural = "mensajes de contacto"
+        permissions = [("export_contactmessage", "Puede exportar mensajes de contacto")]
 
     def __str__(self) -> str:
         return f"{self.subject} - {self.name}"
+
+    @property
+    def scheduled_deletion(self):
+        """Fecha en que se eliminará solo (ver ``apps.contacts.retention``), o ``None``."""
+        days = {
+            self.Status.CLOSED: settings.MESSAGE_RETENTION_DAYS,
+            self.Status.SPAM: settings.SPAM_RETENTION_DAYS,
+        }.get(self.status)
+        if days is None or self.updated_at is None:
+            return None
+        return self.updated_at + timedelta(days=days)

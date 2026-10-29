@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.shortcuts import redirect
 from django.urls import reverse
 
-from .models import SiteConfiguration
+from .models import ChurchValue, Ministry, SiteConfiguration
 
 
 @admin.register(SiteConfiguration)
@@ -13,6 +13,7 @@ class SiteConfigurationAdmin(admin.ModelAdmin):
         ("Identidad", {"fields": ("institution_name", "slogan")}),
         ("Contacto", {"fields": ("phone", "email", "address")}),
         ("Enlaces", {"fields": ("facebook_url", "map_url")}),
+        ("Quiénes somos", {"fields": ("mission", "vision", "purpose", "history")}),
         ("Registro", {"fields": ("updated_at",), "classes": ("collapse",)}),
     ]
 
@@ -30,3 +31,17 @@ class SiteConfigurationAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None) -> bool:
         return False
+
+
+@admin.register(Ministry)
+class MinistryAdmin(admin.ModelAdmin):
+    list_display = ("name", "tag", "order", "is_active")
+    list_editable = ("order", "is_active")
+    search_fields = ("name", "tag")
+    prepopulated_fields = {"slug": ("name",)}
+
+
+@admin.register(ChurchValue)
+class ChurchValueAdmin(admin.ModelAdmin):
+    list_display = ("name", "order", "is_active")
+    list_editable = ("order", "is_active")

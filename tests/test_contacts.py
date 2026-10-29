@@ -134,13 +134,13 @@ def test_missing_consent_is_rejected(client, contact_data):
     assert not ContactMessage.objects.exists()
 
 
-def test_honeypot_rejects_spam(client, contact_data):
+def test_honeypot_discards_bots_without_telling_them(client, contact_data):
     contact_data["website"] = "https://spam.example.com"
 
     response = client.post(reverse("contacts:send"), contact_data)
 
-    assert response.status_code == 200
-    assert response.context["contact_form"].non_field_errors()
+    # El bot ve la misma respuesta que una persona, pero no se guarda nada.
+    assert response.status_code == 302
     assert not ContactMessage.objects.exists()
 
 
@@ -190,13 +190,9 @@ def test_submitted_message_appears_in_backoffice(client, admin_client, contact_d
     client.post(reverse("contacts:send"), contact_data)
     message = ContactMessage.objects.get()
 
-    response = admin_client.get(reverse("admin:index"))
+    response = admin_client.get(reverse("panel:dashboard"))
 
-    assert response.context["bo_new_messages"] == 1
-    message_kpi = next(
-        item for item in response.context["dashboard"]["kpis"] if item["label"] == "Mensajes nuevos"
-    )
-    assert message_kpi["value"] == 1
+    assert response.context["panel_new_messages"] == 1
     assert message.subject in response.content.decode()
 
     response = admin_client.get(

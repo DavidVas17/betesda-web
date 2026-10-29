@@ -1,7 +1,12 @@
 {% extends 'base.html' %}
+{% load seo %}
 {% block title %}{{ post.title }} | Noticias | Betesda Rosa de Sarón{% endblock %}
 {% block description %}{{ post.excerpt }}{% endblock %}
+{% block og_type %}article{% endblock %}
+{% block og_title %}{{ post.title }}{% endblock %}
+{% block og_description %}{{ post.excerpt }}{% endblock %}
+{% block og_image %}{% if post.large_image_url %}<meta property="og:image" content="{% absolute post.large_image_url %}"><meta property="og:image:alt" content="{{ post.title }}">{% else %}{{ block.super }}{% endif %}{% endblock %}
 {% block content %}
   {% include 'includes/page_heading.html' with eyebrow='Noticias y anuncios' heading=post.title intro=post.excerpt %}
-  <section class="section"><article class="container article-width prose"><p class="card-kicker">Publicado el {{ post.published_at|date:'d F Y' }}</p>{% if post.cover_image %}<img class="detail-cover" src="{{ post.cover_image.url }}" alt="{{ post.title }}" width="960" height="540">{% endif %}{{ post.body|linebreaks }}<a class="text-link" href="{% url 'news:list' %}">← Volver a noticias</a></article></section>
+  <section class="section"><article class="container article-width prose"><p class="article-meta"><span>{% include 'includes/icon.html' with name='calendar' %}Publicado el {{ post.published_at|date:'d F Y' }}</span><span>{% include 'includes/icon.html' with name='news' %}Noticias y anuncios</span></p>{% if post.cover_image %}<img class="detail-cover" src="{{ post.large_image_url }}" alt="{{ post.title }}" width="960" height="540">{% endif %}{{ post.body|linebreaks }}<a class="text-link" href="{% url 'news:list' %}">{% include 'includes/icon.html' with name='arrow-left' %}Volver a noticias</a></article></section>
 {% endblock %}

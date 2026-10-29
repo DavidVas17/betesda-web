@@ -28,7 +28,41 @@ DJANGO_ALLOWED_HOSTS=betesdarosadesaron.org,www.betesdarosadesaron.org
 DJANGO_CSRF_TRUSTED_ORIGINS=https://betesdarosadesaron.org,https://www.betesdarosadesaron.org
 CADDY_DOMAIN=betesdarosadesaron.org, www.betesdarosadesaron.org
 SECURE_HSTS_SECONDS=31536000
+DJANGO_ADMIN_URL=una-ruta-propia/
 ```
+
+### Correo de avisos
+
+Cuando entra una petición de oración o un mensaje, el sitio avisa por correo a quienes
+pueden leer mensajes (Atención y oración, Administración de la iglesia) y no apagaron el
+aviso en "Mi cuenta", y al buzón de la iglesia definido en `CONTACT_NOTIFY_EMAILS`. El correo
+no incluye el contenido: solo enlaza al panel.
+
+```dotenv
+EMAIL_URL=smtp+tls://usuario:clave-de-aplicacion@smtp.gmail.com:587
+DEFAULT_FROM_EMAIL=Betesda Rosa de Sarón <no-responder@betesdarosadesaron.org>
+```
+
+El mismo correo envía los enlaces de "¿Olvidaste tu contraseña?" del panel y los avisos de
+seguridad. Conviene definir también:
+
+```dotenv
+SITE_URL=https://betesdarosadesaron.org
+SECURITY_ALERT_EMAILS=quien-administra-el-servidor@ejemplo.org
+# Opcional: a dónde llegan los errores 500 (por defecto, SECURITY_ALERT_EMAILS)
+ERROR_EMAILS=
+```
+
+Sin `EMAIL_URL` los avisos solo se escriben en el registro del contenedor. Con Gmail se usa
+una "contraseña de aplicación", nunca la contraseña normal de la cuenta. Cada persona necesita
+tener su correo guardado en su cuenta del panel.
+
+### Buscadores y redes sociales
+
+El sitio publica `/sitemap.xml` (también enlazado desde `/robots.txt`), datos estructurados de
+la iglesia y de cada evento (schema.org) y la vista previa al compartir en WhatsApp y Facebook
+(Open Graph), con la imagen `static/images/og-betesda.jpg`. Después de publicar, conviene
+registrar el dominio en Google Search Console y enviar el sitemap.
 
 ## Primera publicación
 
@@ -40,6 +74,14 @@ docker compose -f compose.prod.yaml ps
 docker compose -f compose.prod.yaml exec web python manage.py check --deploy
 docker compose -f compose.prod.yaml exec web python manage.py bootstrap_admin
 ```
+
+`bootstrap_admin` crea el superusuario con la contraseña del `.env` (debe tener 10 caracteres
+o más). Si la cuenta ya existe, solo actualiza su correo y permisos: la contraseña no cambia
+salvo que agregues `--reset-password`. Al primer ingreso el panel pide activar la verificación
+en dos pasos.
+
+`compose.prod.yaml` también levanta el servicio `maintenance`, que cada día elimina los
+mensajes que cumplieron su plazo (ver [SECURITY.md](SECURITY.md#plazo-de-conservación)).
 
 Verifique el certificado HTTPS, `/health/ready/`, el inicio de sesión, la carga de estáticos y una operación de lectura/escritura controlada.
 

@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 
 from .models import ContactMessage
 from .modes import CONTACT_MODES
+from .spam import issue_timestamp, time_trap_verdict
 
 
 class ContactMessageForm(forms.ModelForm):
@@ -27,6 +28,8 @@ class ContactMessageForm(forms.ModelForm):
         required=False,
         widget=forms.TextInput(attrs={"tabindex": "-1", "autocomplete": "off"}),
     )
+    # Hora firmada en que se mostró el formulario (trampa de tiempo, ver spam.py).
+    started = forms.CharField(required=False, widget=forms.HiddenInput)
 
     class Meta:
         model = ContactMessage
@@ -78,11 +81,17 @@ class ContactMessageForm(forms.ModelForm):
         for name, placeholder in self.mode["placeholders"].items():
             self.fields[name].widget.attrs["placeholder"] = placeholder
         self.fields["privacy_accepted"].help_text = self.mode["privacy"]
+        if not self.is_bound:
+            self.fields["started"].initial = issue_timestamp()
+        # Si parece un bot, el motivo queda aquí: la vista responde "enviado" sin guardar.
+        self.bot_reason = None
 
     def clean(self):
         cleaned_data = super().clean()
         if cleaned_data.get("website"):
-            raise ValidationError("No se pudo enviar el mensaje. Intenta de nuevo.")
+            self.bot_reason = "llenó el campo trampa"
+        else:
+            self.bot_reason = time_trap_verdict(cleaned_data.get("started", ""))
         return cleaned_data
 
     def clean_phone(self):

@@ -1,20 +1,42 @@
-{% load static %}
+{% load static seo %}
 <!doctype html>
 <html lang="es">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="{% block description %}Conoce Betesda Rosa de Sarón: nuestra iglesia, ministerios, eventos y comunidad en Villa Nueva, Guatemala.{% endblock %}">
+    <meta name="theme-color" content="#111111">
     <title>{% block title %}Betesda Rosa de Sarón{% endblock %}</title>
+    <link rel="canonical" href="{{ canonical_url }}">
+    <meta property="og:site_name" content="{{ site.name }}">
+    <meta property="og:locale" content="es_GT">
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+    <meta property="og:title" content="{% block og_title %}{{ site.name }}{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Amando a Dios, unidos en Cristo y sirviendo a nuestra comunidad en Villa Nueva, Guatemala.{% endblock %}">
+    <meta property="og:url" content="{{ canonical_url }}">
+    {% block og_image %}<meta property="og:image" content="{% absolute_static 'images/og-betesda.jpg' %}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="{{ site.name }}, Villa Nueva, Guatemala">{% endblock %}
+    <meta name="twitter:card" content="summary_large_image">
+    {% block structured_data %}{% endblock %}
     {% include 'includes/favicons.html' %}
-    <link rel="stylesheet" href="{% static 'css/app.css' %}?v=warm-20261010">
-    <link rel="stylesheet" href="{% static 'css/site.css' %}?v=warm-20261010">
+    <link rel="preload" href="{% static 'fonts/lora-latin-wght-normal.woff2' %}" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="{% static 'fonts/dm-sans-latin-wght-normal.woff2' %}" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="{% static 'css/app.css' %}?v=carbon-20261011">
+    <link rel="stylesheet" href="{% static 'css/site.css' %}?v=horarios-20261014">
     {% block extra_css %}{% endblock %}
-    <script src="{% static 'js/site.js' %}" defer></script>
+    <script src="{% static 'js/site.js' %}?v=carbon-20261011" defer></script>
     {% block extra_js %}{% endblock %}
   </head>
   <body>
     <a class="skip-link" href="#contenido">Saltar al contenido</a>
+    <div class="topbar">
+      <div class="container topbar-inner">
+        <a class="topbar-item topbar-address" href="{{ site.map_url }}" target="_blank" rel="noopener noreferrer">{% include 'includes/icon.html' with name='pin' %}<span>{{ site.address }}</span></a>
+        <div class="topbar-links">
+          <a class="topbar-item" href="tel:{{ site.phone_link }}">{% include 'includes/icon.html' with name='phone' %}<span>{{ site.phone }}</span></a>
+          <a class="topbar-item" href="{{ site.facebook_url }}" target="_blank" rel="noopener noreferrer" aria-label="Facebook de la iglesia (abre en otra pestaña)">{% include 'includes/icon.html' with name='facebook' %}<span>Facebook</span></a>
+        </div>
+      </div>
+    </div>
     <header class="site-header">
       <nav class="nav container" aria-label="Navegación principal">
         <a class="brand" href="{% url 'core:home' %}" aria-label="Betesda Rosa de Sarón, ir al inicio">
@@ -22,27 +44,31 @@
           <span class="brand-copy">Betesda<span>Rosa de Sarón</span></span>
         </a>
         <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-navigation">
-          <span>Menú</span><span class="nav-toggle-lines" aria-hidden="true"></span>
+          <span class="icon-open">{% include 'includes/icon.html' with name='menu' %}</span><span class="icon-close">{% include 'includes/icon.html' with name='close' %}</span><span>Menú</span>
         </button>
         <ul id="primary-navigation" class="nav-links">
           {% for item in navigation %}
             <li><a href="{{ item.url }}"{% if item.active %} aria-current="page"{% endif %}>{{ item.label }}</a></li>
           {% endfor %}
         </ul>
+        <a class="button button-primary nav-cta" href="{% url 'contacts:contact' %}?tipo=oracion#formulario">{% include 'includes/icon.html' with name='prayer' %}Petición de oración</a>
       </nav>
     </header>
     <main id="contenido">{% block content %}{% endblock %}</main>
     <footer class="site-footer">
       <div class="container footer-grid">
         <div>
-          <strong>{{ site.name }}</strong>
+          <span class="footer-brand">Betesda Rosa de Sarón</span>
           <p>{{ site.slogan }}</p>
-          <p class="footer-caption">Sirviendo a nuestra comunidad desde {{ site.founded }}.</p>
+          <p class="footer-caption">{{ site.name }} · Sirviendo a nuestra comunidad desde {{ site.founded }}.</p>
         </div>
         <div>
           <strong>Visítanos</strong>
-          <p>{{ site.address }}</p>
-          <a href="tel:{{ site.phone_link }}">{{ site.phone }}</a>
+          <div class="footer-links">
+            <p class="footer-contact">{% include 'includes/icon.html' with name='pin' %}<span>{{ site.address }}</span></p>
+            <a class="footer-contact" href="tel:{{ site.phone_link }}">{% include 'includes/icon.html' with name='phone' %}<span>{{ site.phone }}</span></a>
+            {% if site.email %}<a class="footer-contact" href="mailto:{{ site.email }}">{% include 'includes/icon.html' with name='mail' %}<span>{{ site.email }}</span></a>{% endif %}
+          </div>
         </div>
         <div>
           <strong>Sigamos en contacto</strong>
@@ -52,11 +78,10 @@
               <a class="footer-icon-link" href="{{ site.facebook_url }}" target="_blank" rel="noopener noreferrer" aria-label="Visitar Facebook de la iglesia (abre en otra pestaña)" title="Facebook">{% include 'includes/icon.html' with name='facebook' %}</a>
               <a class="footer-icon-link" href="{{ site.map_url }}" target="_blank" rel="noopener noreferrer" aria-label="Ver ubicación de la iglesia en Google Maps (abre en otra pestaña)" title="Ubicación">{% include 'includes/icon.html' with name='pin' %}</a>
             </nav>
-            {% if site.email %}<a href="mailto:{{ site.email }}">{{ site.email }}</a>{% endif %}
           </div>
         </div>
       </div>
-      <div class="container footer-bottom"><span>Villa Nueva, Guatemala</span><a href="{% url 'core:about' %}">Conoce nuestra iglesia</a></div>
+      <div class="container footer-bottom"><span>© {% now 'Y' %} Betesda Rosa de Sarón · Villa Nueva, Guatemala</span><a href="{% url 'core:about' %}">Conoce nuestra iglesia</a></div>
     </footer>
   </body>
 </html>
