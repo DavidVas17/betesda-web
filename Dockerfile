@@ -9,6 +9,11 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     UV_PROJECT_ENVIRONMENT=/opt/venv \
     PATH="/opt/venv/bin:${PATH}"
 
+# Parches de seguridad de Debian (OpenSSL, GnuTLS, Perl…) que la imagen base aún no trae.
+RUN apt-get update \
+    && apt-get upgrade -y --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
+
 ARG APP_UID=10001
 ARG APP_GID=10001
 
