@@ -43,6 +43,7 @@ urlpatterns = [
     path("mensajes/exportar/", messages.message_export, name="message_export"),
     path("mensajes/<int:pk>/", messages.message_detail, name="message_detail"),
     path("mensajes/<int:pk>/accion/", messages.message_action, name="message_action"),
+    path("mensajes/<int:pk>/responder/", messages.message_reply, name="message_reply"),
     path("mensajes/<int:pk>/eliminar/", messages.message_delete, name="message_delete"),
     path("configuracion/", operations.settings, name="settings"),
     path("nuestra-iglesia/", institution.overview, name="institution"),

@@ -752,9 +752,26 @@ button[aria-busy='true'] { cursor: progress; opacity: .85; }
 .is-done .p-first-check { border-color: #2f5d3a; background: #2f5d3a; color: #fff; }
 .is-done .p-first-check .p-icon { width: 14px; height: 14px; }
 @media (max-width: 760px) { .p-first-steps { grid-template-columns: 1fr; } }
-.p-reply-templates { margin-top: 20px; padding: 18px 20px; border-radius: 14px; background: var(--p-green-soft); }
-.p-reply-templates h3 { margin: 0 0 4px; font-size: .95rem; }
-.p-reply-templates ul { display: grid; gap: 0; margin: 12px 0 0; padding: 0; list-style: none; }
-.p-reply-templates li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 10px 0; border-top: 1px solid var(--p-border); font-size: .9rem; font-weight: 600; }
-.p-reply-templates li:first-child { border-top: 0; }
-.p-reply-links { display: flex; gap: 6px; }
+
+/* Responder desde el panel */
+.p-reply-card, .p-reply-history { margin-top: 24px; }
+.p-reply-card .p-card-heading p strong { color: var(--p-text); }
+.p-reply-templates { margin: 0; padding: 0 24px; background: none; }
+.p-reply-templates-label { display: block; margin: 4px 0 10px; color: var(--p-muted); font-size: .85rem; }
+.p-reply-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.p-reply-chip { padding: 8px 14px; border: 1px solid var(--p-border); border-radius: 999px; color: var(--p-text); font-size: .85rem; font-weight: 600; text-decoration: none; }
+.p-reply-chip:hover { border-color: var(--p-text); }
+.p-reply-chip.is-active { border-color: var(--p-text); background: var(--p-text); color: #fff; }
+.p-reply-form { padding: 20px 24px 8px; }
+.p-reply-form textarea { min-height: 280px; line-height: 1.6; }
+.p-reply-whatsapp { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; padding: 0 24px 22px; font-size: .85rem; }
+.p-reply-whatsapp span { color: var(--p-muted); }
+.p-reply-whatsapp a { color: var(--p-gold); font-weight: 600; }
+.p-reply-history ol { display: grid; margin: 0; padding: 0 24px 16px; list-style: none; }
+.p-reply-history li { padding: 18px 0; border-top: 1px solid var(--p-border); }
+.p-reply-history li:first-child { border-top: 0; }
+.p-reply-meta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px; font-size: .85rem; }
+.p-reply-meta span { color: var(--p-muted); }
+.p-reply-subject { margin: 6px 0 8px; font-weight: 600; }
+.p-reply-body { color: var(--p-muted); font-size: .9rem; line-height: 1.6; }
+.p-reply-body p { margin: 0 0 8px; }

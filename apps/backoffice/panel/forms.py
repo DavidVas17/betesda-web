@@ -159,6 +159,16 @@ class PanelSetPasswordForm(SetPasswordForm):
         self.fields["new_password2"].label = "Confirma la contraseña nueva"
 
 
+class MessageReplyForm(forms.Form):
+    subject = forms.CharField(label="Asunto", max_length=200)
+    body = forms.CharField(
+        label="Mensaje",
+        max_length=5000,
+        widget=forms.Textarea(attrs={"rows": 12}),
+        help_text="Deja una línea en blanco entre párrafos. Llega con el diseño de la iglesia.",
+    )
+
+
 class MessageFollowupForm(forms.ModelForm):
     class Meta:
         model = ContactMessage

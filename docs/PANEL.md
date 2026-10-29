@@ -12,8 +12,11 @@ ejecutar migraciones para habilitarlo.
   Los textos están en `apps/backoffice/panel/guide.py`.
 - **Primeros pasos**: el tablero muestra una lista (nombre, correo, verificación en dos pasos)
   hasta que la cuenta queda lista.
-- **Respuestas listas**: en cada solicitud hay textos para responder por correo o WhatsApp que
-  se abren ya escritos para personalizarlos (`apps/contacts/replies.py`).
+- **Responder desde el panel**: en cada solicitud se elige una respuesta lista, se ajusta y se
+  envía desde el correo de la iglesia (`DEFAULT_FROM_EMAIL`) con el diseño del sitio. Si la
+  persona contesta, llega al buzón de `CONTACT_NOTIFY_EMAILS`. Cada respuesta queda en el
+  historial de la solicitud y se borra con ella. WhatsApp queda como alternativa
+  (`apps/contacts/replies.py`).
 
 ## Navegación
 

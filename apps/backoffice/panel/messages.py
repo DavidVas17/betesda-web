@@ -1,4 +1,5 @@
 import csv
+import logging
 
 from django.contrib import messages
 from django.contrib.admin.models import DELETION
@@ -17,9 +18,11 @@ from apps.contacts import replies
 from apps.contacts.models import ContactMessage
 
 from .access import panel_required
-from .forms import MessageFollowupForm
+from .forms import MessageFollowupForm, MessageReplyForm
 from .security import recent_auth_required
 from .utils import audit, paginate, pagination_query, panel_render
+
+logger = logging.getLogger(__name__)
 
 
 def _filtered(request):
@@ -122,9 +125,10 @@ def message_detail(request, pk):
             "can_change": can_change,
             "can_delete": request.user.has_perm("contacts.delete_contactmessage"),
             "reply_url": replies.mailto(item),
-            "reply_options": replies.options(
-                item, request.user, request.build_absolute_uri(reverse("contacts:contact"))
-            ),
+            "reply_options": replies.options(item, request.user, _reply_site(request)),
+            "reply_form": _reply_form(request, item) if can_change else None,
+            "reply_sender": replies.sender_address(),
+            "sent_replies": item.replies.select_related("author"),
             "whatsapp_url": (
                 f"https://wa.me/{replies.whatsapp_number(item.phone)}"
                 if replies.whatsapp_number(item.phone)
@@ -136,6 +140,54 @@ def message_detail(request, pk):
         title="Detalle de solicitud",
         subtitle="Escucha, acompaña y registra el seguimiento.",
     )
+
+
+def _reply_site(request):
+    from apps.core.context_processors import public_site
+
+    site = public_site(request)["site"]
+    return {"url": request.build_absolute_uri(reverse("core:home")), "phone": site.get("phone")}
+
+
+def _reply_form(request, item, data=None):
+    template = replies.REPLIES_BY_KEY.get(request.GET.get("plantilla", ""))
+    if template and item.kind not in template.kinds:
+        template = None
+    initial = {
+        "subject": replies.default_subject(item),
+        "body": replies.render(template, item, request.user, _reply_site(request))
+        if template
+        else "",
+    }
+    return MessageReplyForm(data, initial=initial)
+
+
+@sensitive_post_parameters("body")
+@panel_required("contacts.change_contactmessage")
+@require_POST
+def message_reply(request, pk):
+    """Envía la respuesta desde el correo de la iglesia y la deja en el historial."""
+    item = get_object_or_404(ContactMessage, pk=pk)
+    form = _reply_form(request, item, request.POST)
+    if form.is_valid():
+        try:
+            replies.send(
+                item, request.user, form.cleaned_data["subject"], form.cleaned_data["body"]
+            )
+        except Exception:  # noqa: BLE001 - se informa en pantalla y no se guarda nada
+            logger.exception("No se pudo enviar la respuesta a la solicitud #%s", item.pk)
+            messages.error(
+                request,
+                "No se pudo enviar el correo. Revisa la configuración de correo del sitio o "
+                "responde por WhatsApp.",
+            )
+        else:
+            audit(request, item, message="Respuesta enviada por correo.")
+            messages.success(request, f"Respuesta enviada a {item.email}.")
+            return redirect(f"{reverse('panel:message_detail', args=[item.pk])}#respuestas")
+    else:
+        messages.error(request, "Escribe el asunto y el mensaje antes de enviar.")
+    return redirect(f"{reverse('panel:message_detail', args=[item.pk])}#responder")
 
 
 @panel_required("contacts.change_contactmessage")

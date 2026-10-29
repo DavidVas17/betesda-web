@@ -83,7 +83,8 @@ TOPICS = (
         steps=(
             "Te llega un correo cuando entra una solicitud. Ábrela desde el enlace o en Mensajes.",
             "Asígnala a la persona que la acompañará y cambia el estado a «En seguimiento».",
-            "Usa «Responder por correo» para escribirle; puedes partir de una respuesta lista.",
+            "Toca «Responder», elige una respuesta lista y ajústala. Se envía desde el correo "
+            "de la iglesia y queda en el historial de la solicitud.",
             "Anota en «Notas del equipo» lo que hicieron. La persona no las ve.",
             "Cuando terminen, márcala «Cerrada». Se elimina sola después de un año.",
         ),

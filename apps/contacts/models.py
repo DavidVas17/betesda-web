@@ -64,3 +64,30 @@ class ContactMessage(TimeStampedModel):
         if days is None or self.updated_at is None:
             return None
         return self.updated_at + timedelta(days=days)
+
+
+class MessageReply(models.Model):
+    """Respuesta enviada desde el panel con el correo de la iglesia. Se borra junto con la
+    solicitud cuando cumple su plazo de conservación."""
+
+    message = models.ForeignKey(
+        ContactMessage, verbose_name="solicitud", on_delete=models.CASCADE, related_name="replies"
+    )
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name="enviada por",
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name="message_replies",
+    )
+    subject = models.CharField("asunto", max_length=200)
+    body = models.TextField("mensaje")
+    sent_at = models.DateTimeField("enviada", auto_now_add=True)
+
+    class Meta:
+        ordering = ("-sent_at",)
+        verbose_name = "respuesta enviada"
+        verbose_name_plural = "respuestas enviadas"
+
+    def __str__(self) -> str:
+        return f"Respuesta a #{self.message_id}"
