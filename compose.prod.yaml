@@ -2,7 +2,7 @@ name: betesda-web-prod
 
 services:
   db:
-    image: postgres:17.6-alpine
+    image: postgres:18.4-alpine
     restart: unless-stopped
     env_file:
       - .env
