@@ -55,12 +55,19 @@ def test_person_taking_a_few_seconds_gets_through(client, time_trap):
     assert ContactMessage.objects.count() == 1
 
 
-@pytest.mark.parametrize(
-    "token",
-    [started_ago(1), "", "manipulado", signing.dumps(time.time(), salt="otra-cosa")],
-)
-def test_bots_are_silently_discarded(client, time_trap, token):
-    response = client.post(SEND, data(started=token), follow=True)
+# Cada marca se crea al correr la prueba, no al cargar el archivo: si se creara antes, en una
+# máquina lenta ya habrían pasado los 3 segundos y el "bot" parecería una persona.
+BOT_TOKENS = {
+    "demasiado-rapido": lambda: started_ago(1),
+    "sin-marca": lambda: "",
+    "manipulada": lambda: "manipulado",
+    "firma-de-otro-formulario": lambda: signing.dumps(time.time(), salt="otra-cosa"),
+}
+
+
+@pytest.mark.parametrize("case", BOT_TOKENS)
+def test_bots_are_silently_discarded(client, time_trap, case):
+    response = client.post(SEND, data(started=BOT_TOKENS[case]()), follow=True)
 
     assert "Recibimos tu petición" in response.content.decode() or response.status_code == 200
     assert not ContactMessage.objects.exists()

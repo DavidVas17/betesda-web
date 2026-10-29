@@ -35,7 +35,7 @@ def test_ics_file_is_valid_and_in_utc(client, vigil):
     assert text.startswith("BEGIN:VCALENDAR\r\n") and text.endswith("END:VCALENDAR\r\n")
     assert "DTSTART:20261121T010000Z" in text  # 19:00 en Guatemala = 01:00 UTC
     assert "DTEND:20261121T030000Z" in text  # sin hora de fin: 2 horas
-    assert "SUMMARY:Vigilia de oración\\, adoración\; y alabanza" in text
+    assert "SUMMARY:Vigilia de oración\\, adoración\\; y alabanza" in text
     assert all(len(line.encode()) <= 75 for line in text.split("\r\n"))
 
 
