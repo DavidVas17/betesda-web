@@ -1,5 +1,10 @@
 {% extends 'base.html' %}
+{% load seo %}
 {% block title %}{{ album.title }} | Galería | Betesda Rosa de Sarón{% endblock %}
+{% block description %}{{ album.description|default:'Fotografías de nuestras actividades.'|truncatewords:30 }}{% endblock %}
+{% block og_title %}{{ album.title }} · Galería{% endblock %}
+{% block og_description %}{{ album.description|default:'Fotografías de nuestras actividades.'|truncatewords:30 }}{% endblock %}
+{% block og_image %}{% with cover=album.photos.first %}{% if cover %}<meta property="og:image" content="{% absolute cover.display_url %}"><meta property="og:image:alt" content="{{ cover.alt_text }}">{% else %}{{ block.super }}{% endif %}{% endwith %}{% endblock %}
 {% block content %}
   {% include 'includes/page_heading.html' with eyebrow='Galería de eventos' heading=album.title intro=album.description %}
   <section class="section"><div class="container"><div class="section-heading"><a class="text-link" href="{% url 'gallery:list' %}">{% include 'includes/icon.html' with name='arrow-left' %}Volver a la galería</a>{% if album.event_date %}<p class="card-kicker">{% include 'includes/icon.html' with name='calendar' %}{{ album.event_date|date:'d F Y' }}</p>{% endif %}</div>{% if page_obj %}<div class="photo-grid">{% for photo in page_obj %}<figure><a class="photo-link" href="{{ photo.display_url }}" data-gallery-photo data-caption="{{ photo.caption }}"><img src="{{ photo.thumb_url }}" alt="{{ photo.alt_text }}" loading="lazy" width="640" height="480"><span class="photo-zoom">Ver fotografía {% include 'includes/icon.html' with name='external' %}</span></a>{% if photo.caption %}<figcaption>{{ photo.caption }}</figcaption>{% endif %}</figure>{% endfor %}</div>{% else %}{% include 'includes/empty_state.html' with icon='image' heading='Este álbum aún no tiene fotografías' copy='Puedes explorar los otros álbumes de nuestra galería.' %}{% endif %}{% include 'includes/pagination.html' %}</div></section>

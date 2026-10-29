@@ -49,11 +49,20 @@ seguridad. Conviene definir también:
 ```dotenv
 SITE_URL=https://betesdarosadesaron.org
 SECURITY_ALERT_EMAILS=quien-administra-el-servidor@ejemplo.org
+# Opcional: a dónde llegan los errores 500 (por defecto, SECURITY_ALERT_EMAILS)
+ERROR_EMAILS=
 ```
 
 Sin `EMAIL_URL` los avisos solo se escriben en el registro del contenedor. Con Gmail se usa
 una "contraseña de aplicación", nunca la contraseña normal de la cuenta. Cada persona necesita
 tener su correo guardado en su cuenta del panel.
+
+### Buscadores y redes sociales
+
+El sitio publica `/sitemap.xml` (también enlazado desde `/robots.txt`), datos estructurados de
+la iglesia y de cada evento (schema.org) y la vista previa al compartir en WhatsApp y Facebook
+(Open Graph), con la imagen `static/images/og-betesda.jpg`. Después de publicar, conviene
+registrar el dominio en Google Search Console y enviar el sitemap.
 
 ## Primera publicación
 

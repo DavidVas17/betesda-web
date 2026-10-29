@@ -6,4 +6,5 @@ app_name = "events"
 urlpatterns = [
     path("", views.event_list, name="list"),
     path("<slug:slug>/", views.detail, name="detail"),
+    path("<slug:slug>/calendario.ics", views.ics, name="ics"),
 ]

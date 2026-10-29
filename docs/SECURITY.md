@@ -89,6 +89,21 @@ Las defensas están en `apps/contacts/spam.py`:
 A un bot se le responde igual que a una persona, para que no aprenda a esquivar las trampas.
 Lo marcado como "No deseado" se conserva 30 días por si fue un error.
 
+## Acciones delicadas, bitácora y errores
+
+- Exportar o borrar mensajes y crear, editar, borrar o restablecer cuentas del equipo piden la
+  contraseña otra vez (y el código 2FA si está activa) si se escribió hace más de
+  `RECENT_AUTH_MINUTES` (10). Exportar avisa por correo a quienes administran y queda en la
+  bitácora.
+- La bitácora (Actividad) registra inicios y cierres de sesión con navegador e IP, y muestra los
+  intentos fallidos de la última semana: de ingreso, de código 2FA, de recuperación y de
+  confirmación.
+- En producción, los errores 500 llegan por correo a `ERROR_EMAILS` (o a
+  `SECURITY_ALERT_EMAILS`). El reporte omite contraseñas, cookies y los campos del formulario
+  de contacto y de las notas internas (`sensitive_post_parameters`).
+- El CI escanea la imagen de Docker con Trivy: una vulnerabilidad crítica con arreglo disponible
+  detiene el PR.
+
 ## Otras protecciones
 
 - Contraseñas de 10 caracteres como mínimo, además de los validadores de Django.

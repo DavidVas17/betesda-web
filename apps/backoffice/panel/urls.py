@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import auth, content, dashboard, institution, messages, operations, security
+from . import auth, content, dashboard, guide, institution, messages, operations, security
 
 app_name = "panel"
 
@@ -60,6 +60,7 @@ urlpatterns = [
     path("usuarios/<int:pk>/contrasena/", operations.user_password, name="user_password"),
     path("actividad/", operations.activity, name="activity"),
     path("cuenta/", auth.account, name="account"),
+    path("guia/", guide.guide, name="guide"),
     path("cuenta/contrasena/", auth.password_change, name="password_change"),
     path("cuenta/cerrar-otras-sesiones/", auth.logout_others, name="logout_others"),
     path("ingresar/verificar/", security.verify, name="two_factor_verify"),

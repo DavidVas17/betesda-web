@@ -5,6 +5,16 @@ propia, independiente de las pantallas del administrador de Django. Ambos usan l
 la misma base de datos, los mismos archivos y las mismas cuentas. No es necesario copiar datos ni
 ejecutar migraciones para habilitarlo.
 
+## Ayuda para el equipo
+
+- **Guía rápida** (`/panel/guia/`, en el menú lateral): cómo publicar, subir fotos, atender
+  peticiones, gestionar el equipo y cuidar la cuenta. Cada persona ve solo lo que su rol permite.
+  Los textos están en `apps/backoffice/panel/guide.py`.
+- **Primeros pasos**: el tablero muestra una lista (nombre, correo, verificación en dos pasos)
+  hasta que la cuenta queda lista.
+- **Respuestas listas**: en cada solicitud hay textos para responder por correo o WhatsApp que
+  se abren ya escritos para personalizarlos (`apps/contacts/replies.py`).
+
 ## Navegación
 
 - **Inicio:** solicitudes pendientes, próximos eventos publicados, noticias, álbumes y acciones

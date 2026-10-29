@@ -43,7 +43,13 @@ def favicon(request: HttpRequest) -> HttpResponse:
 
 def robots_txt(request: HttpRequest) -> HttpResponse:
     """El panel no se indexa. La ruta del admin no se menciona: listarla aquí la revelaría."""
-    lines = ["User-agent: *", "Disallow: /panel/", "Disallow: /health/", ""]
+    lines = [
+        "User-agent: *",
+        "Disallow: /panel/",
+        "Disallow: /health/",
+        f"Sitemap: {request.build_absolute_uri('/sitemap.xml')}",
+        "",
+    ]
     return HttpResponse("\n".join(lines), content_type="text/plain; charset=utf-8")
 
 

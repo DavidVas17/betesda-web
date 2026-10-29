@@ -30,6 +30,7 @@
         {% endfor %}
       </nav>
       <div class="p-sidebar-bottom">
+        <a class="p-nav-item{% if panel_active == 'guide' %} is-active{% endif %}" href="{% url 'panel:guide' %}"{% if panel_active == 'guide' %} aria-current="page"{% endif %}>{% include 'panel/icon.html' with name='help' %}<span>Guía rápida</span></a>
         <a class="p-nav-item" href="{% url 'core:home' %}" target="_blank" rel="noopener">{% include 'panel/icon.html' with name='external' %}<span>Ver sitio de la iglesia</span></a>
         {% if request.user.is_superuser %}<a class="p-nav-item p-nav-technical" href="{% url 'admin:index' %}">{% include 'panel/icon.html' with name='settings' %}<span>Administración técnica</span></a>{% endif %}
         <div class="p-sidebar-user"><span class="p-avatar">{{ request.user.first_name|default:request.user.username|slice:':1'|upper }}</span><div><strong>{{ request.user.get_short_name|default:request.user.username }}</strong><span>{% if request.user.is_superuser %}Superadministrador{% else %}{{ request.user.role_names|first|default:'Equipo Betesda' }}{% endif %}</span></div></div>

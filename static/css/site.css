@@ -225,3 +225,12 @@
   .schedule-item { grid-template-columns: 1fr; gap: .15rem; }
 }
 @media (prefers-reduced-motion: reduce) { .live-dot { animation: none; } }
+
+/* Guardar y compartir un evento */
+.event-save, .event-share { display: grid; gap: .75rem; margin-top: 1.75rem; }
+.event-share { padding-top: 1.5rem; border-top: 1px solid var(--line); }
+.event-save .eyebrow, .event-share .eyebrow { margin: 0; }
+.event-save .button { width: 100%; }
+.event-share-links { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
+.event-share-links .button { padding-inline: 1rem; }
+.detail-sidebar > .text-link:last-child { margin-top: 1.5rem; }

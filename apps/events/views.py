@@ -1,8 +1,10 @@
 from django.core.paginator import Paginator
 from django.db.models import Q
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 
+from . import calendar
 from .models import Event
 from .selectors import upcoming_events
 
@@ -24,4 +26,22 @@ def event_list(request):
 
 def detail(request, slug):
     event = get_object_or_404(Event, slug=slug, is_published=True)
-    return render(request, "events/detail.html", {"event": event})
+    url = request.build_absolute_uri(event.get_absolute_url())
+    return render(
+        request,
+        "events/detail.html",
+        {
+            "event": event,
+            "google_calendar_url": calendar.google_calendar_url(event, url),
+            "whatsapp_share_url": calendar.whatsapp_url(event, url),
+            "facebook_share_url": calendar.facebook_url(url),
+        },
+    )
+
+
+def ics(request, slug):
+    event = get_object_or_404(Event, slug=slug, is_published=True)
+    url = request.build_absolute_uri(event.get_absolute_url())
+    response = HttpResponse(calendar.ics(event, url), content_type="text/calendar; charset=utf-8")
+    response["Content-Disposition"] = f'attachment; filename="{event.slug}.ics"'
+    return response

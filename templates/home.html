@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load seo static %}
 {% block title %}Inicio | Betesda Rosa de Sarón{% endblock %}
+{% block structured_data %}{% church_schema %}{% endblock %}
 {% block content %}
 <section class="home-hero">
   <div class="container home-hero-grid">

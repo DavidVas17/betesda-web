@@ -13,6 +13,22 @@ from .access import panel_required
 from .utils import panel_render, query_url
 
 
+def _first_steps(user):
+    """Lista para quien recién llega. Desaparece cuando todo está hecho."""
+    steps = [
+        ("Escribe tu nombre", bool(user.first_name), reverse("panel:account")),
+        ("Guarda tu correo para recibir avisos", bool(user.email), reverse("panel:account")),
+        (
+            "Activa la verificación en dos pasos",
+            two_factor.is_enabled(user),
+            reverse("panel:two_factor_setup"),
+        ),
+    ]
+    if all(done for _, done, _ in steps):
+        return None
+    return [{"label": label, "done": done, "url": url} for label, done, url in steps]
+
+
 @panel_required()
 @require_GET
 def dashboard(request):
@@ -118,7 +134,7 @@ def dashboard(request):
         request,
         "panel/dashboard.html",
         {
-            "suggest_two_factor": not two_factor.is_enabled(request.user),
+            "first_steps": _first_steps(request.user),
             "kpis": kpis,
             "quick_actions": quick_actions,
             "recent_messages": recent_messages,

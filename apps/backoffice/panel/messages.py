@@ -1,5 +1,4 @@
 import csv
-from urllib.parse import quote, urlencode
 
 from django.contrib import messages
 from django.contrib.admin.models import DELETION
@@ -14,6 +13,7 @@ from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from apps.accounts.alerts import alert_messages_exported
+from apps.contacts import replies
 from apps.contacts.models import ContactMessage
 
 from .access import panel_required
@@ -121,8 +121,15 @@ def message_detail(request, pk):
             "form": form,
             "can_change": can_change,
             "can_delete": request.user.has_perm("contacts.delete_contactmessage"),
-            "reply_url": f"mailto:{quote(item.email, safe='@')}?"
-            + urlencode({"subject": f"Re: {item.subject}"}),
+            "reply_url": replies.mailto(item),
+            "reply_options": replies.options(
+                item, request.user, request.build_absolute_uri(reverse("contacts:contact"))
+            ),
+            "whatsapp_url": (
+                f"https://wa.me/{replies.whatsapp_number(item.phone)}"
+                if replies.whatsapp_number(item.phone)
+                else ""
+            ),
             "phone_url": f"tel:+{phone}" if phone else "",
         },
         active="messages",

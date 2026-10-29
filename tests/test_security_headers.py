@@ -58,7 +58,11 @@ def test_templates_have_no_inline_code_that_the_policy_would_block():
             continue  # los correos no son páginas: los clientes de correo exigen estilos en línea
         text = path.read_text(encoding="utf-8")
         for script in re.findall(r"<script\b[^>]*>", text):
-            if "src=" not in script and "application/json" not in script:
+            if (
+                "src=" not in script
+                and "application/json" not in script
+                and "ld+json" not in script
+            ):
                 offenders.append(f"{path.name}: {script}")
         if re.search(r"\sstyle=\"|<style\b|\son[a-z]+=\"", text):
             offenders.append(f"{path.name}: estilo o evento en línea")
